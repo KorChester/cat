@@ -107,10 +107,11 @@
       border:2.5px solid rgba(255,143,179,.72);background:rgba(255,255,255,.88);color:#c73e6b;
       box-shadow:0 4px 15px rgba(40,30,70,.22);font-size:23px;font-weight:900;touch-action:manipulation}
     #btnF:active{transform:scale(.93);background:#ffe3ed}
-    body.touch-running #wrap,body.touch-running #stage,body.touch-running canvas,
-    body.touch-running #pad,body.touch-running #padL,body.touch-running #padR{touch-action:manipulation}
-    body.touch-running #padL,body.touch-running #btnL,body.touch-running #btnR{touch-action:none}
-    body.touch-running #btnJ,body.touch-running #btnM,body.touch-running #btnP{touch-action:manipulation}
+    /* Während einer laufenden Runde gehört jede Mehrfinger-Geste dem Spiel.
+       In Menüs/Overlays bleibt Browser-Zoom als Accessibility-Funktion erhalten. */
+    body.touch-running,body.touch-running #wrap,body.touch-running #stage,
+    body.touch-running canvas,body.touch-running #pad,body.touch-running #pad *,
+    body.touch-running #btnP{touch-action:none!important;overscroll-behavior:none}
     #hint{display:none}
   }
   #dreh{display:none}
@@ -179,11 +180,12 @@
   <div class="karte">
     <span class="badge">HANDY-MODUS</span>
     <h2>Größer spielen. Sicher tippen.</h2>
-    <p>Starte das Spiel im Vollbild. Die Daumenfelder fangen jeden Tipp ab – Doppeltippen zoomt das Spiel nicht mehr versehentlich.</p>
+    <p>Starte das Spiel im Vollbild. Während einer Runde gehören auch Zwei-Daumen- und Doppeltipps sicher dem Spiel – ohne versehentlichen Browser-Zoom.</p>
     <button id="mobileStart" type="button">⛶ SPIEL GROSS STARTEN</button>
     <div id="mobileIosHilfe">
       <strong>Auf dem iPhone ohne Adresszeile:</strong>
-      Tippe in Safari auf <b>Teilen</b> und dann auf <b>Zum Home-Bildschirm</b>. Öffne SAMTPFOTEN anschließend über das neue Pfoten-Icon.
+      Tippe in Safari auf <b>Teilen</b> und dann auf <b>Zum Home-Bildschirm</b>.
+      Lass dort <b>Als Web-App öffnen</b> aktiviert und starte SAMTPFOTEN anschließend über das neue Pfoten-Icon.
     </div>
     <button id="mobileContinue" type="button">Jetzt im Browser weiterspielen</button>
   </div>
@@ -224,7 +226,7 @@
 'use strict';
 
 /* ---------------- Grundkonstanten ---------------- */
-const GAME_VERSION = '16.0';
+const GAME_VERSION = '17.1';
 const VW = 960, VH = 540, TS = 40;
 const TOUCH_DEVICE = (
   (typeof matchMedia === 'function' && matchMedia('(pointer: coarse), (any-pointer: coarse)').matches) ||
@@ -292,7 +294,12 @@ async function requestGameFullscreen(){
     return false;
   }
   try {
-    await request.call(root, {navigationUI:'hide'});
+    try {
+      await request.call(root, {navigationUI:'hide'});
+    } catch(ersterVersuch){
+      /* Ältere WebKit-Varianten kennen die Optionsform noch nicht. */
+      await request.call(root);
+    }
     if(typeof screen !== 'undefined' && screen.orientation && screen.orientation.lock){
       try { await screen.orientation.lock('landscape'); } catch(e){}
     }
@@ -310,7 +317,13 @@ const ACC_GND = 2400, ACC_AIR = 1600, FRIC_GND = 2800, FRIC_AIR = 500;
 const JUMP_V = 730, JUMP2_V = 600;
 const COYOTE = 0.15, BUFFER = 0.14, CUT_JUMP = 0.42, BOUNCE_V = 430;
 const PW = 34, PH = 56;
+const MIAU_RADIUS = 250, MIAU_COOLDOWN = 1.15, MIAU_MAX_ZIELE = 3;
+const LICHT_WARNZEIT = 0.30;
 const LINEAR_MOVER_TEMPO = 1.75, PENDEL_TEMPO = 1.4;
+const JET_CYCLE = 3.6, JET_ON = 2.05, JET_WARN = 0.42;
+const JET_HALF_W = 34, JET_CORE_W = 12, JET_TOP_FADE = 48;
+const JET_ACCEL = 4300, JET_MAX_UP = 520, JET_CHARGE_TIME = 0.72;
+const JET_EXIT_GRACE = 0.6, JET_PULSE_LOCK = 0.16;
 const TURM_NACH = 11, TURM_ZIEL = 15000, TURM_ANZEIGE_ZIEL = 3000;
 const TURM_GRAV = 1750, TURM_BOUNCE = 790, TURM_MAX_VX = 330, TURM_ACC = 2100;
 const FUNK_DAUER = 75;
@@ -570,7 +583,7 @@ const LEVELS = [
   coins:[[4,9,6],[16,8,2],[19,9,2],[22,7,2],[25,9,3],[30,8,2],[33,9,4],[42,10,1],[43,11,1],[46,11,5],[53,10,2],[56,9,6],[65,8,2],[68,9,4],[77,9,3],[85,8,2],[88,9,2],[90,7,2],[92,9,3],[96,8,1],[97,7,1],[98,8,1],[100,8,1],[101,7,2],[104,9,2],[108,9,3],[113,11,4],[118,9,2],[121,9,3],[124,8,1],[127,9,2],[129,8,2],[132,9,2],[135,7,2],[138,9,2],[140,8,2],[143,9,4],[153,9,4],[158,8,2],[160,9,2],[163,7,2],[166,9,2],[169,7,2],[172,7,7],[180,8,2],[183,9,5],[190,7,2],[193,7,2],[196,6,1],[198,7,1],[200,8,1],[201,9,2],[203,10,1],[206,9,5],[214,9,6]],
   enemies:[{"x":97,"y":6,"t":"fly","a":97,"b":97},{"x":118,"y":6,"t":"fly","a":118,"b":118},{"x":180,"y":6,"t":"fly","a":180,"b":180}],
   hazards:[[101,10,2],[163,10,2]],
-  movers:[],
+  movers:[{"x":42,"y":9,"w":3,"dx":1,"dy":0,"d":2,"s":120},{"x":108,"y":10,"w":3,"dx":1,"dy":0,"d":2,"s":125},{"x":200,"y":8,"w":3,"dx":1,"dy":0,"d":2,"s":135}],
   yarn:[[10,8],[81,6],[196,5]],
   checkpoints:[[72,10],[147,10],[185,10]],
   broesel:[[108,10,3]],
@@ -578,7 +591,7 @@ const LEVELS = [
   milch:[[76,10],[145,10]],
   gold:[124,5],
   schlecki:[151,8],
-  mech:{"zug":{"tempo":100}},
+  mech:{"band":[[0,15,10,1],[18,11,10,1],[32,9,10,-1],[55,9,10,1],[67,17,10,1],[87,8,10,-1],[99,7,10,1],[120,8,10,-1],[142,15,10,1],[160,8,10,1],[182,7,10,-1],[204,25,10,1]],"par":92},
   goal:[226,10]
 },
 {
@@ -593,7 +606,7 @@ const LEVELS = [
   broesel:[],
   federn:[[139,11],[228,9]],
   milch:[[127,11],[250,3]],
-  gold:[251,0],
+  gold:[251,2],
   schlecki:[187,4],
   mech:{"wind":{"stark":55},"tramp":[[83,3,9],[124,3,11],[223,3,11]]},
   goal:[376,11]
@@ -642,7 +655,7 @@ const LEVELS = [
   checkpoints:[],
   broesel:[],
   federn:[],
-  milch:[[9,10]],
+  milch:[[9,10],[37,10]],
   gold:[23,8],
   boss:{"x":30,"y":12,"typ":"gurr"},
   goal:[44,12]
@@ -693,9 +706,9 @@ const LEVELS = [
   broesel:[[135,7,3],[145,7,3],[302,12,4]],
   federn:[[231,12]],
   milch:[[98,12],[259,12]],
-  gold:[212,10],
+  gold:[212,7],
   schlecki:[203,9],
-  mech:{"lampen":[[24,9,6,0.7,0],[44,9,6,0.7,0.5],[66,9,6,0.8,0],[76,9,6,0.8,0.5],[110,9,6,0.8,0],[126,9,6,0.8,0.5],[142,9,6,0.7,0.25],[158,9,7,0.6,0],[180,9,6,0.8,0.6],[220,9,6,0.9,0.7],[248,3,6,0.8,0],[252,9,6,0.75,0.5],[268,9,6,0.75,0],[316,9,6,0.9,0.3],[352,9,5,0.7,0],[362,9,5,0.7,0.33],[372,9,5,0.7,0.66]]},
+  mech:{"lampen":[[24,9,5,0.62,0],[66,9,5,0.66,0.15],[110,9,5,0.64,0.35],[142,9,5,0.62,0.6],[180,9,5,0.64,0.2],[220,9,5,0.6,0.7],[248,3,5,0.58,0],[268,9,5,0.62,0.45],[316,9,5,0.65,0.25],[362,9,5,0.6,0.5]]},
   goal:[396,12]
 },
 {
@@ -750,21 +763,21 @@ const LEVELS = [
   goal:[416,12]
 },
 {
-  name:"NEUN-LEBEN-PFAD", sub:"Meisterpfad II · Neun Leben, ein Versuch", theme:6, w:500, h:15, spawn:[2,12], diff:17,
-  solid:[[0,12,22,3],[26,12,16,3],[48,10,15,5],[68,12,17,3],[90,9,14,6],[110,11,18,4],[135,12,20,3],[161,12,12,3],[247,12,16,3],[269,9,14,6],[274,6,3,3],[287,11,14,4],[294,8,3,3],[308,12,19,3],[333,10,13,5],[400,12,16,3],[422,10,10,5],[440,7,12,1],[445,4,3,3],[463,10,6,5],[475,12,25,3]],
-  coins:[[3,11,7],[19,10,1],[20,9,1],[22,8,1],[24,9,1],[26,10,1],[28,11,8],[40,10,1],[42,9,1],[44,8,1],[46,8,1],[48,9,1],[50,9,8],[60,8,1],[62,9,1],[64,10,1],[67,11,1],[69,11,8],[82,10,1],[84,9,1],[86,8,1],[89,8,1],[91,8,8],[101,7,1],[103,8,1],[105,9,1],[108,10,1],[111,10,9],[124,9,1],[126,10,1],[129,10,1],[132,11,1],[136,11,9],[151,10,1],[154,10,1],[157,10,1],[160,11,1],[162,11,8],[171,10,1],[174,9,1],[177,9,3],[181,8,1],[184,7,1],[187,7,3],[191,8,1],[194,9,1],[197,9,3],[201,8,1],[204,7,1],[207,7,3],[211,8,1],[214,9,1],[217,9,3],[221,8,1],[224,7,1],[227,7,3],[231,8,1],[234,9,1],[237,9,3],[241,10,1],[244,11,1],[248,11,9],[259,10,1],[262,9,1],[265,8,1],[268,8,1],[270,8,4],[278,7,1],[281,8,1],[284,9,1],[287,10,1],[288,10,6],[299,9,1],[302,9,1],[305,10,1],[308,11,1],[310,11,9],[323,10,1],[326,9,1],[329,8,1],[332,8,1],[334,9,8],[344,8,1],[347,8,1],[350,8,1],[352,8,5],[358,7,1],[360,6,1],[363,7,3],[368,8,1],[370,9,1],[372,9,3],[377,8,1],[379,7,1],[381,7,3],[386,8,1],[388,9,1],[390,9,3],[394,10,1],[397,11,1],[401,11,9],[413,10,1],[416,9,1],[419,8,1],[422,9,1],[424,9,6],[431,8,1],[433,7,1],[435,6,1],[438,5,2],[441,6,3],[449,6,1],[452,7,1],[455,8,1],[458,9,5],[464,9,4],[468,8,1],[470,7,1],[472,8,1],[474,9,1],[476,10,1],[478,11,8],[489,10,1],[490,9,2],[492,10,1],[494,11,5]],
-  enemies:[{"x":169,"y":12,"t":"dog","a":167,"b":171},{"x":323,"y":12,"t":"dog","a":321,"b":325}],
-  hazards:[[485,12,2]],
-  movers:[{"x":435,"y":10,"w":2,"dx":0,"dy":-1,"d":3,"s":85}],
-  yarn:[[54,7],[249,8],[382,5]],
-  checkpoints:[[145,12],[250,12],[309,12],[404,12],[465,10]],
-  broesel:[[352,9,5],[458,10,5]],
+  name:"NEUN-KNOTEN-PFAD", sub:"Meisterpfad II · Drei Prüfungen, dein Tempo", theme:6, w:360, h:15, spawn:[2,12], diff:17,
+  solid:[[0,12,18,3],[23,12,14,3],[42,10,14,5],[61,12,15,3],[81,9,14,6],[100,12,10,3],[151,10,10,5],[166,12,8,3],[179,9,8,6],[192,12,8,3],[205,10,9,5],[219,12,11,3],[265,12,8,3],[286,6,7,9],[342,12,18,3]],
+  coins:[[2,11,10],[24,11,10],[43,9,10],[62,11,10],[82,8,10],[101,11,8],[152,9,8],[167,11,6],[180,8,6],[193,11,6],[206,9,7],[220,11,8],[235,9,5],[245,7,5],[255,9,5],[266,11,6],[287,5,6],[309,8,8],[343,11,8]],
+  enemies:[{"x":153,"y":10,"t":"dog","a":152,"b":159},{"x":186,"y":6,"t":"fly","a":186,"b":186},{"x":325,"y":6,"t":"motte","a":325,"b":325}],
+  hazards:[[184,9,2],[350,12,2]],
+  movers:[{"x":278,"y":11,"w":3,"dx":0,"dy":-1,"d":5,"s":95},{"x":299,"y":7,"w":3,"dx":1,"dy":0,"d":6,"s":110}],
+  yarn:[[50,8],[187,6],[314,7]],
+  checkpoints:[[104,12],[223,12],[268,12]],
+  broesel:[[235,10,5],[245,8,5],[255,10,5],[309,9,8]],
   federn:[],
-  milch:[[145,12],[322,12]],
-  gold:[446,2],
-  schlecki:[250,9],
-  mech:{"band":[[0,21,12,1],[26,15,12,-1],[48,14,10,1],[68,16,12,-1],[90,13,9,1],[110,17,11,-1],[135,19,12,1],[333,12,10,1],[422,9,10,-1]],"miau":[[177,10,5,0],[187,8,5,0],[197,10,5,0],[207,8,5,0],[217,10,5,0],[227,8,5,0],[237,10,5,0],[363,8,5,1],[372,10,5,1],[381,8,5,1],[390,10,5,1]],"lampen":[[276,3,6,0.7,0],[295,4,6,0.85,0.5],[446,2,6,0.75,0.25]],"zug":{"tempo":88}},
-  goal:[495,12]
+  milch:[[104,12],[268,12]],
+  gold:[290,3],
+  schlecki:[181,7],
+  mech:{"band":[[6,11,12,1],[23,13,12,-1],[42,13,10,1],[61,14,12,-1],[81,13,9,1],[100,9,12,-1]],"miau":[[115,10,5,1],[124,8,5,0],[133,10,5,1],[142,8,5,0],[322,10,5,1],[332,8,5,0]],"lampen":[[173,2,6,0.85,0],[200,2,6,1.05,0.5]],"rotband":[[4,11],[28,11],[47,9],[67,11],[86,8],[104,11],[117,9],[126,7],[135,9],[144,7],[155,9],[170,11],[182,8],[195,11],[208,9],[223,11],[237,9],[247,7],[257,9],[268,11],[280,8],[290,5],[302,6],[312,8],[324,9],[334,7],[347,11],[356,11]],"par":155},
+  goal:[356,12]
 }
 ];
 /* ---------------- Story pro Level (20 Level, 3 Bosse) ---------------- */
@@ -777,7 +790,7 @@ const STORY = [
  'Jede Wäsche verliert Socken. Heute stellt sich raus: an wen. – Bespring Lord Flusen 4×, aber NIE, wenn er wirbelt!',
  'Schlaf ist die Kunst, woanders zu sein. Zum Beispiel: oben.',
  'Vierzig Balkone, vierzig Meinungen dazu, ob hier gerade eine Katze langlaufen darf.',
- 'Nächster Halt: bitte festkrallen. Die Miezelinie wartet auf NIEMANDEN.',
+ 'Nächster Halt: bitte festkrallen. Die Miezelinie hat ihren eigenen Takt – du bestimmst, wann du einsteigst.',
  'Der Wind meint es gut mit dir. Er weiß es nur selbst noch nicht.',
  'Nach Ladenschluss gehört der Laden denen, die er meint. Und einem Roboter namens Gerald.',
  'Jede Schindel trägt dich. Ungefähr eine halbe Sekunde lang.',
@@ -788,7 +801,7 @@ const STORY = [
  'Die ganze Reise hängt am Himmel. Fehlt nur noch der letzte Schritt.',
  'Es endet, wie es anfing: mit einer Gurke. Nur größer. DEUTLICH größer. Spring König Gurke 5× auf die Krone!',
  'MEISTERPFAD I: Glas, Seife, Fontänen und Gegenlauf-Bänder. Kein Sicherheitsnetz – nur Timing.',
- 'MEISTERPFAD II: Neun Leben wären praktisch. Merke dir den Rhythmus, schalte mit MIAU um und bleib in Bewegung.'
+ 'MEISTERPFAD II: Drei rote Knoten, drei Prüfungen. Lies den Pfad, wähle dein Tempo – und setz jedes MIAU bewusst.'
 ];
 
 /* Welche Zwischenszene läuft vor welchem Level? */
@@ -834,7 +847,7 @@ const CUTSCENES = {
   {bg:'nacht',  text:'Von unten eine getragene Stimme: „TRETET EIN! ODER TRETET … nun. Es reimt sich nicht. TRETET EINFACH EIN.“ – „Es dichtet“, flüsterte Chester. „Es dichtet SCHLECHT“, sagte Chase. „Das ändert alles. Plan?“ – „Socke holen. Und niemanden kuscheln.“'}
  ],
  ubahn: [
-  {bg:'nacht',  text:'Am U-Bahn-Viadukt saß ein rot getigerter Kater auf der Antenne. „Rille. Liga“, grinste er herunter. „Ihr guckt wie Katzen, die zu Fuß gehen wollen. Tut das nicht. Ihr nehmt die Miezelinie: die Dächer der Nachtbahn, sechs Stationen, direkter geht’s nicht.“'},
+  {bg:'nacht',  text:'Am U-Bahn-Viadukt saß ein rot getigerter Kater auf der Antenne. „Rille. Liga“, grinste er herunter. „Ihr guckt wie Katzen, die zu Fuß gehen wollen. Tut das nicht. Ihr nehmt die Miezelinie: drei Etappen über die Dächer der Nachtbahn – und diesmal bestimmt ihr das Tempo.“'},
   {bg:'nacht',  text:'„Sicherheitsunterweisung! Regel eins: nicht runterfallen. Regel zwei: siehe Regel eins. An Stationen hält sie kurz – wer trödelt, lernt den Nachtbus kennen. Den fährt ein Waschbär.“ – „Gibt es einen Speisewagen?“, fragte Chester. Rille schwieg lange. „… Ich mag dich.“'}
  ],
  gurr: [
@@ -1563,7 +1576,8 @@ function bindInput(canvas){
   canvas.addEventListener('contextmenu', e => e.preventDefault());
 
   /* Safari/Chrome dürfen außerhalb des Spiels weiter per Pinch zoomen.
-     Innerhalb der aktiven Spiel-Shell fangen wir nur den Smart-/Doppeltipp-Zoom ab. */
+     In einer laufenden Runde gehört die gesamte Spielfläche beiden Daumen:
+     CSS touch-action ist die erste, WebKit-Gestenabfangung die zweite Sicherung. */
   const istSpielFlaeche = ziel => {
     let el = ziel;
     while(el){
@@ -1577,6 +1591,19 @@ function bindInput(canvas){
       ev.preventDefault();
     }
   }, {passive:false});
+  const aktiveSpielGeste = ev =>
+    document.body.classList.contains('touch-running') && istSpielFlaeche(ev.target);
+  document.addEventListener('touchstart', ev => {
+    if(aktiveSpielGeste(ev) && ev.touches && ev.touches.length > 1) ev.preventDefault();
+  }, {passive:false,capture:true});
+  document.addEventListener('touchmove', ev => {
+    if(aktiveSpielGeste(ev)) ev.preventDefault();
+  }, {passive:false,capture:true});
+  for(const typ of ['gesturestart','gesturechange','gestureend']){
+    document.addEventListener(typ, ev => {
+      if(aktiveSpielGeste(ev)) ev.preventDefault();
+    }, {passive:false,capture:true});
+  }
   const padFlaeche = document.getElementById('pad');
   if(padFlaeche){
     const leerAbfangen = ev => {
@@ -1905,14 +1932,21 @@ function buildWorld(def){
   const federn = (def.federn||[]).map(([x,y]) => ({x:x*TS+2, y:y*TS-16, w:TS-4, h:16, ph:0}));
   const broesel = (def.broesel||[]).map(([x,y,w2]) => ({x, y, w:w2, zustand:'da', t:0}));
   broesel.forEach(b => { for(let i=0;i<b.w;i++) if(b.x+i < W) grid[b.y][b.x+i] = 2; });
-  const milchListe = def.milch ? (Array.isArray(def.milch[0]) ? def.milch : [def.milch]) : [];
+  const milchListe = !Array.isArray(def.milch) || !def.milch.length ? []
+    : (Array.isArray(def.milch[0])
+      ? def.milch.filter(m=>Array.isArray(m)&&m.length>=2)
+      : (def.milch.length>=2 ? [def.milch] : []));
   const milchs = milchListe.map(([mx,my]) => ({x:mx*TS-10, y:my*TS-24, w:60, h:24, used:false, hugT:0}));
-  const gold = def.gold ? {x:def.gold[0]*TS+TS/2, y:def.gold[1]*TS+TS/2, got:false} : null;
+  const gold = def.gold ? {
+    x:def.gold[0]*TS+TS/2, y:def.gold[1]*TS+TS/2,
+    homeX:def.gold[0]*TS+TS/2, homeY:def.gold[1]*TS+TS/2, got:false
+  } : null;
   const schlecki = def.schlecki ? {x:def.schlecki[0]*TS+TS/2, y:def.schlecki[1]*TS+TS/2, got:false} : null;
   /* ---- Mechanik-Objekte (Fontänen, Miau-Plattformen, Lampenkegel) ---- */
   const mechDef = def.mech || {};
-  const jets = (mechDef.jets||[]).map(([jx, jy, hoehe, phase]) => ({
-    x: jx*TS + TS/2, baseY: jy*TS, topY: (jy - hoehe)*TS, hoehe, phase: phase || 0, an:false
+  const jets = (mechDef.jets||[]).map(([jx, jy, hoehe, phase], id) => ({
+    id, x: jx*TS + TS/2, baseY: jy*TS, topY: (jy - hoehe)*TS, hoehe, phase: phase || 0,
+    an:false, zielAn:false, warn:false, power:0
   }));
   const miauZonen = (mechDef.miau||[]).map(([mx, my, mw, an]) => ({x:mx, y:my, w:mw, an:!!an}));
   miauZonen.forEach(z => { for(let i=0;i<z.w;i++) if(z.x+i < W) grid[z.y][z.x+i] = z.an ? 3 : 4; });
@@ -1936,7 +1970,7 @@ function buildWorld(def){
       typ:'gurr', x: bx, y: 5*TS, w: 76, h: 56, flugY: 5*TS,
       dir:1, hits:0, maxHits:4, mode:'kreisen', t:2.2, dead:false, deadT:0,
       minX: 2*TS, maxX: (W-2)*TS - 76, blink:0, wellen:[], miniT:7,
-      luegt:false, zielX: 0, kruemelT: 1.4, ph: 0, bodenY: by
+      luegt:false, letzteLuege:false, zielX:0, kruemelT:1.7, ph:0, bodenY:by
     };
     else boss = {
       typ:'gurke', x: bx, y: by - 78, w: 96, h: 78,
@@ -1987,7 +2021,10 @@ function makePlayer(world){
   return { x:s[0]*TS, y:s[1]*TS-PH, w:PW, h:PH,
     vx:0, vy:0, onGround:false, coyote:0, buffer:0, jumps:0, face:1, run:0,
     squash:1, stretch:1, dead:false, deadT:0, blink:0,
-    shield:false, turbo:0, superT:0, scared:false, idleT:0, katapult:0 };
+    shield:false, turbo:0, superT:0, scared:false, idleT:0, katapult:0,
+    lichtT:0, lichtWarn:false,
+    jetId:-1, jetCharge:0, jetExitT:0, jetPulseCd:0, jetPulseT:0,
+    airT:0, flow:0, flowT:0 };
 }
 function moveAxis(p, world, dx, dy){
   if(dx){
@@ -2233,15 +2270,9 @@ function drawMiniCountdown(rest,titel,farbe){
 function parZeit(world){
   const w = world || Game.world;
   if(!w) return 0;
+  const gesetzt = Number(w.def && w.def.mech && w.def.mech.par);
+  if(Number.isFinite(gesetzt) && gesetzt > 0) return Math.round(gesetzt);
   let par = Math.round(w.W / 4) + 20 + (w.def.boss ? 25 : 0);
-  const tempo = Number(w.def && w.def.mech && w.def.mech.zug && w.def.mech.zug.tempo);
-  if(Number.isFinite(tempo) && tempo > 0 && w.goal){
-    /* Beim Auto-Scroll kann die Katze das Ziel erst erreichen, wenn die
-       Kamera weit genug gefahren ist. Chases 92-%-Ziel bekommt danach noch
-       20 s echten Spielraum für Schalter, Deckung und den Schlusssprung. */
-    const kameraMinimum = Math.max(0, (w.goal.x - VW + 16) / tempo);
-    par = Math.max(par, Math.ceil((kameraMinimum + 20) / 0.92));
-  }
   return par;
 }
 function pfotenMeisterziel(index, world){
@@ -2681,8 +2712,8 @@ const Game = {
       return;
     }
     if(this.state !== 'play' || this.paused || !this.player || this.player.dead) return;
-    if(this.miauT > 0.3) return;
-    this.miauT = 1.1;
+    if(this.miauT > 0) return;
+    this.miauT = MIAU_COOLDOWN;
     Audio_.meow(true);
     heart(this.player.x + PW/2, this.player.y - 8, 3);
     if(goldStufe() >= 6){
@@ -2703,16 +2734,43 @@ const Game = {
       Audio_.tone(520+this.eggMiau[geheim.id]*90,.09,'triangle',.09,60);
       if(this.eggMiau[geheim.id]>=geheim.need) findeEi(geheim.id,geheim.msg);
     }
-    /* Miau verwirrt Hunde – und vertreibt Nachtwesen für einen Moment. */
-    if(this.world) for(const e of this.world.enemies){
-      if(['dog','motte','schatten'].includes(e.t) && !e.dead
-         && Math.abs(e.x - this.player.x) < (e.t === 'dog' ? 260 : 310) && e.verwirrCd <= 0){
-        e.verwirrT = e.t === 'dog' ? 1.8 : 1.35;
-        e.verwirrCd = e.t === 'dog' ? 4 : 2.8;
-        e.mode = 'patrol';
-        if(e.t === 'motte') e.dir = Math.sign(e.x-this.player.x) || 1;
+    /* Schreckpuls: höchstens drei NAHE Gegner reagieren kurz. Er macht keinen
+       Schaden und jeder Gegner besitzt einen eigenen Schutz vor Dauer-Stun. */
+    let miauTreffer = 0;
+    if(this.world){
+      const px=this.player.x+PW/2, py=this.player.y+PH/2;
+      const ziele=this.world.enemies
+        .filter(e=>!e.dead && (e.verwirrCd||0)<=0)
+        .map(e=>{
+          const dx=e.x+e.w/2-px, dy=e.y+e.h/2-py;
+          return {e,dist:Math.hypot(dx,dy),wegX:Math.sign(dx)||1};
+        })
+        .filter(z=>z.dist<=MIAU_RADIUS)
+        .sort((a,b)=>a.dist-b.dist)
+        .slice(0,MIAU_MAX_ZIELE);
+      for(const z of ziele){
+        const e=z.e;
+        e.verwirrCd=3.2;
+        e.dir=z.wegX;
+        if(e.t==='dog'){
+          e.verwirrT=1.5; e.mode='patrol'; e.chargeT=0; e.bellT=0;
+        }else if(e.t==='motte'||e.t==='fly'){
+          e.verwirrT=.9;
+        }else if(e.t==='schatten'){
+          e.verwirrT=1.05; e.mode='patrol';
+        }else if(e.t==='huepfer'){
+          e.verwirrT=.7; e.hopCd=Math.max(e.hopCd||0,1.15);
+          if(!e.onG) e.vx*=.6;
+        }else if(e.t==='werfer'){
+          e.verwirrT=.75; e.wirft=0; e.wurfCd=Math.max(e.wurfCd||0,1.45);
+        }else{
+          /* Laufkatze und Igel erschrecken, drehen um und sammeln sich kurz. */
+          e.verwirrT=.65;
+        }
+        miauTreffer++;
       }
     }
+    if(miauTreffer) ansage(`MIAU: ${miauTreffer} Gegner kurz erschreckt.`);
     /* Miau schaltet die Wechselplattformen um (rosa ↔ mint) */
     if(this.world && this.world.miauZonen && this.world.miauZonen.length){
       const w = this.world, p = this.player;
@@ -2775,6 +2833,7 @@ const Game = {
     if(p.superT > 0 && reason !== 'fall') return;
     if(p.turbo > 0 && reason !== 'fall') return;
     this.combo = 0; this.comboT = 0;
+    p.flow = 0; p.flowT = 0;
     this.levelDamage++;
     if(reason === 'fall') this.levelFalls++;
     if(p.shield && (reason === 'enemy' || reason === 'hazard')){
@@ -2799,7 +2858,14 @@ const Game = {
     p.dead = false; p.deadT = 0; p.vx = 0; p.vy = 0; p.blink = 1.6;
     p.x = this.respawn.x; p.y = this.respawn.y;
     p.jumps = 0; p.onGround = false; p.turbo = 0; p.superT = 0;
-    p.buffer = 0; p.coyote = 0; p.katapult = 0;
+    p.buffer = 0; p.coyote = 0; p.katapult = 0; p.airT = 0;
+    p.jetId = -1; p.jetCharge = 0; p.jetExitT = 0; p.jetPulseCd = 0; p.jetPulseT = 0;
+    p.lichtT = 0; p.lichtWarn = false;
+    if(this.world.gold&&!this.world.gold.got){
+      this.world.gold.x=this.world.gold.homeX;
+      this.world.gold.y=this.world.gold.homeY;
+    }
+    p.flow = 0; p.flowT = 0;
     p.squash = 1; p.stretch = 1; p.scared = false; p.idleT = 0;
     Input.left = Input.right = Input.jump = Input.jumpPressed = false;
     if(this.salsa){ this.salsa.x = p.x - 44; this.salsa.y = p.y + PH - this.salsa.h; this.salsaPfad = []; }
@@ -4083,6 +4149,69 @@ function collectCoin(c){
   }
 }
 
+function jetKontakt(w, p){
+  let bester = null;
+  const mx = p.x + PW/2, my = p.y + PH/2;
+  for(const j of w.jets || []){
+    if((j.power || 0) <= 0.02 || p.y + PH <= j.topY || p.y >= j.baseY) continue;
+    const sway = REDUCED_MOTION ? 0 : Math.sin(Game.time*3.1 + j.phase*6.2832) * 8 * j.power;
+    const mitte = j.x + sway, dx = Math.abs(mx - mitte);
+    if(dx >= JET_HALF_W) continue;
+    const horizontal = 1 - clamp((dx-JET_CORE_W)/(JET_HALF_W-JET_CORE_W), 0, 1);
+    const oben = clamp((my-j.topY)/JET_TOP_FADE, 0, 1);
+    const staerke = j.power * horizontal * oben;
+    if(staerke > 0.015 && (!bester || staerke > bester.staerke))
+      bester = {j, mitte, staerke, oben};
+  }
+  return bester;
+}
+
+function lichtLinieFrei(w,L,zielX,zielY){
+  const dx=zielX-L.x,dy=zielY-L.y;
+  const dist=Math.hypot(dx,dy);
+  if(dist<=.01)return true;
+  const winkel=Math.atan2(dx,dy);
+  return lichtStrahlLaenge(w,L,winkel,dist)>=dist-.01;
+}
+
+function lichtStrahlLaenge(w,L,winkel,maxDist=L.reich){
+  const limit=Number.isFinite(maxDist)?Math.max(0,maxDist):0;
+  const reich=Number.isFinite(L.reich)?Math.max(0,L.reich):limit;
+  const ende=Math.min(reich,limit);
+  let zuletztFrei=0;
+  for(let d=2;d<=ende;d+=2){
+    const tx=Math.floor((L.x+Math.sin(winkel)*d)/TS);
+    const ty=Math.floor((L.y+Math.cos(winkel)*d)/TS);
+    if(solidAt(w,tx,ty))return zuletztFrei;
+    zuletztFrei=d;
+  }
+  if(zuletztFrei<ende){
+    const tx=Math.floor((L.x+Math.sin(winkel)*ende)/TS);
+    const ty=Math.floor((L.y+Math.cos(winkel)*ende)/TS);
+    if(solidAt(w,tx,ty))return zuletztFrei;
+  }
+  return ende;
+}
+
+function belohneFlowLandung(p, runTempo, impact){
+  if(p.airT < 0.26 || Math.abs(p.vx) < runTempo*0.68) return;
+  p.flow = Math.min(5, (p.flow || 0) + 1);
+  p.flowT = 3.4;
+  const bonus = 4 + p.flow*3, alt = floaters.length;
+  addScore(bonus, p.x+PW/2, p.y-12);
+  if(floaters[alt]) floaters[alt].txt = p.flow > 1
+    ? `PFOTEN-FLOW ×${p.flow}  +${Math.round(bonus*(Game.cat.scoreMul||1))}`
+    : `SAUBERE LANDUNG  +${Math.round(bonus*(Game.cat.scoreMul||1))}`;
+  Audio_.sCombo(p.flow);
+  spawnParts(p.x+PW/2, p.y+PH, 3+p.flow, p.flow>=4?'#ffd166':'#9be8c8',
+    {speed:90+impact*55,life:0.38,grav:160,form:p.flow>=4?'stern':'dot',size:4});
+  if(p.flow===3) haptik(7);
+  if(p.flow===5){
+    Game.toast('SAMTPFOTEN-FLOW · 5 saubere Landungen!');
+    haptik([8,20,8]);
+  }
+}
+
 function updatePlayer(dt){
   const p = Game.player, w = Game.world, cat = Game.cat;
   if(!p || !w) return;
@@ -4118,6 +4247,32 @@ function updatePlayer(dt){
     for(const z of zonen) if(fty === z[2] && ftx >= z[0] && ftx <= z[0] + z[1]) return z;
     return null;
   };
+  p.jetPulseCd = Math.max(0, (p.jetPulseCd || 0) - dt);
+  p.jetPulseT = Math.max(0, (p.jetPulseT || 0) - dt);
+  if(p.flowT > 0){
+    p.flowT = Math.max(0, p.flowT-dt);
+    if(p.flowT === 0) p.flow = 0;
+  }
+  if(!p.onGround) p.airT = (p.airT || 0) + dt;
+  const jetVorSprung = jetKontakt(w, p);
+  if(jetVorSprung){
+    const neuerJet = p.jetId !== jetVorSprung.j.id;
+    if(neuerJet){
+      p.jetId = jetVorSprung.j.id;
+      p.jetCharge = Math.max(p.jetCharge || 0, 1);
+      p.jumps = Math.min(p.jumps, 1);
+      Audio_.tone(470, 0.07, 'sine', 0.065, 80);
+    }
+    p.jetExitT = JET_EXIT_GRACE;
+    if(jetVorSprung.staerke >= 0.55)
+      p.jetCharge = Math.min(2, p.jetCharge + dt/JET_CHARGE_TIME);
+  } else if(p.jetExitT > 0){
+    /* Draußen bleibt genau eine taktische Wasserpfote – zwei wären ein
+       praktisch folgenloser Ausstieg und widersprächen der sichtbaren Regel. */
+    p.jetCharge = Math.min(1, p.jetCharge || 0);
+    p.jetExitT = Math.max(0, p.jetExitT-dt);
+    if(p.jetExitT === 0){ p.jetCharge = 0; p.jetId = -1; }
+  }
   const glatt = (p.onGround || (p.vy >= 0 && p.vy < 90)) && !!inZone(mech.rutsch);
   if(glatt && Math.abs(p.vx) > 60 && Math.random() < dt*18)
     spawnParts(p.x + PW/2 - p.face*12, p.y + PH - 4, 1, 'rgba(255,255,255,0.9)', {speed:40, life:0.5, grav:-60});
@@ -4141,9 +4296,24 @@ function updatePlayer(dt){
   if(p.buffer > 0){
     if(p.onGround || p.coyote > 0){
       p.vy = -jv; p.onGround = false; p.coyote = 0; p.buffer = 0; p.jumps = 1;
+      p.airT = 0;
       p.stretch = 1.32; p.squash = 0.78;
       Audio_.sJump();
       spawnParts(p.x+PW/2, p.y+PH, 6, '#ffffff', {speed:120, life:0.35, dir:Math.PI/2, spread:0.9});
+    } else if(p.jetCharge >= 1 && p.jetPulseCd <= 0
+      && ((jetVorSprung && jetVorSprung.staerke > 0.2) || p.jetExitT > 0)){
+      p.jetCharge = Math.max(0, p.jetCharge-1);
+      p.jetPulseCd = JET_PULSE_LOCK; p.jetPulseT = 0.28;
+      p.vy = Math.max(-680, Math.min(p.vy-160, -585*(cat.jump2Mul||1)));
+      p.vx = clamp(p.vx + dir*55, -RUN*1.08, RUN*1.08);
+      p.jumps = 2; p.buffer = 0; p.katapult = 0.2;
+      p.stretch = 1.38; p.squash = 0.74;
+      Audio_.tone(520,0.08,'triangle',0.13,230);
+      Audio_.tone(850,0.08,'sine',0.08,100,0.045);
+      haptik(7);
+      Game.shake = Math.max(Game.shake, 0.7);
+      spawnParts(p.x+PW/2,p.y+PH/2,12,'rgba(175,228,255,.95)',
+        {speed:170,life:0.45,grav:120,size:4});
     } else if(p.jumps < 2){
       p.vy = -jv2; p.jumps = 2; p.buffer = 0; p.katapult = 0;
       p.stretch = 1.28; p.squash = 0.8;
@@ -4188,6 +4358,8 @@ function updatePlayer(dt){
     p.coyote = COYOTE; p.jumps = 0;
     if(!wasGround){
       const impact = clamp((aufprallV-170)/650,0,1);
+      belohneFlowLandung(p, RUN, impact);
+      p.airT = 0;
       p.squash = 1.16 + impact*0.18; p.stretch = 0.86 - impact*0.12;
       spawnParts(p.x+PW/2, p.y+PH, 3+Math.round(impact*7), '#ffffff',
         {speed:82+impact*80, life:0.26+impact*0.16, dir:-Math.PI/2, spread:1.2, grav:350});
@@ -4212,21 +4384,24 @@ function updatePlayer(dt){
     if(bandZ) moveAxis(p, w, bandZ[3] * 74 * dt, 0);
   }
 
-  /* Fontänen: aktive Wassersäule trägt sanft nach oben */
-  for(const j of w.jets || []){
-    if(!j.an) continue;
+  /* Fontänen-Aufzug: weicher Rand, kräftiger Kern und kein unsichtbarer Deckel. */
+  const jetNachher = jetKontakt(w, p);
+  p.jetKontakt = !!jetNachher;
+  if(jetNachher){
+    const maxOben = lerp(90, JET_MAX_UP, jetNachher.oben);
+    if(p.vy > -maxOben)
+      p.vy = Math.max(-maxOben, p.vy-JET_ACCEL*jetNachher.staerke*dt);
     const mx = p.x + PW/2;
-    if(Math.abs(mx - j.x) < 30 && p.y + PH > j.topY && p.y < j.baseY){
-      p.vy = Math.max(-460, p.vy - 2600*dt);
-      if(p.y < j.topY + 10) p.vy = Math.max(p.vy, -40);   /* oben sanft schweben */
-      p.jumps = Math.min(p.jumps, 1);                     /* Doppelsprung als Absprung */
-      p.onGround = false;
-      if(Math.random() < dt*10)
-        spawnParts(mx + rnd(-10,10), p.y + PH, 1, 'rgba(190,230,255,0.9)', {speed:50, life:0.4, grav:180});
-    }
+    p.vx += clamp((jetNachher.mitte-mx)*5.5,-70,70)*jetNachher.staerke*dt;
+    p.onGround = false;
+    if(Math.random() < dt*14)
+      spawnParts(mx+rnd(-13,13),p.y+PH,1,'rgba(190,235,255,.92)',
+        {speed:62,life:0.42,grav:150});
   }
 
-  /* Taschenlampen-Kegel: erwischt = wie ein Hazard (Kartons werfen Schatten!) */
+  /* Taschenlampen-Kegel: ein kurzer, sichtbarer Reaktionsmoment statt
+     Sofort-Tod. Kartons blocken Darstellung UND Kollision identisch. */
+  let imLicht=false;
   if((w.lampen || []).length && p.blink <= 0 && p.turbo <= 0 && p.superT <= 0){
     const mx = p.x + PW/2, my = p.y + PH*0.6;
     for(const L of w.lampen){
@@ -4236,23 +4411,25 @@ function updatePlayer(dt){
       /* Winkel zum Kegel (Kegelachse zeigt nach unten, geschwenkt um L.ang) */
       const winkel = Math.atan2(dx, dy);                  /* 0 = senkrecht darunter */
       if(Math.abs(winkel - L.ang) > 0.34) continue;
-      /* Sichtlinie: feste Blöcke blocken das Licht */
-      let verdeckt = false;
-      for(let s = 0.2; s < 1; s += 0.16){
-        const tx = Math.floor((L.x + dx*s)/TS), ty = Math.floor((L.y + dy*s)/TS);
-        if(solidAt(w, tx, ty)){ verdeckt = true; break; }
-      }
-      if(!verdeckt){ Game.killPlayer('hazard'); return; }
+      if(lichtLinieFrei(w,L,mx,my)){imLicht=true;break;}
     }
   }
-
-  /* Auto-Scroll: die Bahn wartet nicht */
-  if(mech.zug){
-    if(p.x > Game.cam.x + VW - PW - 6) p.x = Game.cam.x + VW - PW - 6;
-    if(p.x < Game.cam.x + 2){
-      moveAxis(p, w, Game.cam.x + 2 - p.x, 0);
-      if(p.x < Game.cam.x - 18){ Game.killPlayer('fall'); return; }
+  if(imLicht){
+    if(!p.lichtWarn){
+      p.lichtWarn=true;
+      Audio_.tone(540,.06,'square',.08,150);
+      haptik(5);
+      ansage('Licht! Schnell in Deckung.');
     }
+    p.lichtT=Math.min(LICHT_WARNZEIT+.02,(p.lichtT||0)+dt);
+    p.scared=true;
+    if(p.lichtT>=LICHT_WARNZEIT){
+      p.lichtT=0;p.lichtWarn=false;
+      Game.killPlayer('hazard');return;
+    }
+  }else{
+    p.lichtT=Math.max(0,(p.lichtT||0)-dt*3.4);
+    if(p.lichtT<=0)p.lichtWarn=false;
   }
 
   /* Leckerlis: kleiner Sog immer, großer Magnet mit Schlecki-Power */
@@ -4271,7 +4448,12 @@ function updatePlayer(dt){
   /* Goldfischli (Geheimnis) */
   if(w.gold && !w.gold.got){
     const gg = w.gold;
-    if(p.x < gg.x+18 && p.x+p.w > gg.x-18 && p.y < gg.y+18 && p.y+p.h > gg.y-18){
+    const dxG=gg.x-(p.x+PW/2),dyG=gg.y-(p.y+PH/2),dG=Math.hypot(dxG,dyG);
+    if(dG<88&&lichtLinieFrei(w,{x:p.x+PW/2,y:p.y+PH/2},gg.x,gg.y)){
+      const zug=4.8*dt;
+      gg.x-=dxG*zug;gg.y-=dyG*zug;
+    }
+    if(p.x < gg.x+24 && p.x+p.w > gg.x-24 && p.y < gg.y+24 && p.y+p.h > gg.y-24){
       gg.got = true;
       addScore(200, gg.x, gg.y - 18);
       const vorher = goldAnzahl();
@@ -4706,6 +4888,23 @@ function updateWalk(dt){
   }
 }
 
+function gurrSicheresZiel(w,B,rohX){
+  const halb=B.w/2,min=B.minX+halb,max=B.maxX+halb;
+  const bodenReihe=Math.floor(B.bodenY/TS);
+  let best=clamp(rohX,min,max),bestAbstand=Infinity;
+  for(let cx=Math.ceil(min);cx<=Math.floor(max);cx+=2){
+    const links=Math.floor((cx-halb-4)/TS),rechts=Math.floor((cx+halb+4)/TS);
+    let frei=true;
+    for(let y=1;y<bodenReihe&&frei;y++)
+      for(let x=links;x<=rechts;x++)
+        if(solidAt(w,x,y)){frei=false;break;}
+    if(!frei)continue;
+    const abstand=Math.abs(cx-rohX);
+    if(abstand<bestAbstand){best=cx;bestAbstand=abstand;}
+  }
+  return best;
+}
+
 function updateWorld(dt, active){
   const w = Game.world, p = Game.player;
   if(!w || !p) return;
@@ -4723,12 +4922,20 @@ function updateWorld(dt, active){
     }
     m.px = m.x - prevX; m.py = m.y - prevY;
   }
-  /* Fontänen: Zyklus 3,6 s (1,8 s an), Wassersäule trägt die Katze */
+  /* Fontänen: lesbarer Zyklus mit Vorwarnung und weich ein-/auslaufendem Druck. */
   for(const j of w.jets || []){
-    const warAn = j.an;
-    j.an = ((Game.time + j.phase * 3.6) % 3.6) < 1.8;
-    if(j.an && !warAn) Audio_.tone(240, 0.3, 'sine', 0.06, 160);
-    if(j.an && active && Math.random() < dt*22)
+    const t = (Game.time + j.phase*JET_CYCLE) % JET_CYCLE;
+    const zielAn = t < JET_ON, warZielAn = j.zielAn, warWarn = j.warn;
+    j.zielAn = zielAn;
+    j.warn = !zielAn && t >= JET_CYCLE-JET_WARN;
+    const schritt = dt/(zielAn ? 0.12 : 0.22);
+    j.power += clamp((zielAn ? 1 : 0)-j.power, -schritt, schritt);
+    j.power = clamp(j.power,0,1);
+    j.an = j.power > 0.02;
+    const imBild = j.x > Game.cam.x-60 && j.x < Game.cam.x+VW+60;
+    if(zielAn && !warZielAn && imBild) Audio_.tone(240, 0.3, 'sine', 0.06, 160);
+    if(j.warn && !warWarn && imBild) Audio_.tone(330,0.045,'triangle',0.035,40);
+    if(j.power > 0.08 && active && imBild && Math.random() < dt*22*j.power)
       spawnParts(j.x + rnd(-8, 8), j.baseY - rnd(0, j.baseY - j.topY), 1, 'rgba(160,215,255,0.8)',
         {speed: 60, life: 0.5, grav: 240});
   }
@@ -4759,12 +4966,15 @@ function updateWorld(dt, active){
     if(e.dead){ e.deadT += dt; continue; }
     if(e.verwirrCd > 0) e.verwirrCd -= dt;
     if(e.t === 'walk' || e.t === 'igel'){
-      e.x += e.dir * e.speed * dt;
-      if(e.x < e.a){ e.x = e.a; e.dir = 1; }
-      if(e.x + e.w > e.b){ e.x = e.b - e.w; e.dir = -1; }
-      const aheadX = e.dir > 0 ? e.x + e.w + 2 : e.x - 2;
-      const tx = Math.floor(aheadX/TS), ty = Math.floor((e.y + e.h + 4)/TS);
-      if(!solidAt(w, tx, ty) && ty < w.H) e.dir *= -1;
+      if(e.verwirrT > 0) e.verwirrT -= dt;
+      else {
+        e.x += e.dir * e.speed * dt;
+        if(e.x < e.a){ e.x = e.a; e.dir = 1; }
+        if(e.x + e.w > e.b){ e.x = e.b - e.w; e.dir = -1; }
+        const aheadX = e.dir > 0 ? e.x + e.w + 2 : e.x - 2;
+        const tx = Math.floor(aheadX/TS), ty = Math.floor((e.y + e.h + 4)/TS);
+        if(!solidAt(w, tx, ty) && ty < w.H) e.dir *= -1;
+      }
     } else if(e.t === 'schatten'){
       if(e.verwirrT > 0){
         e.verwirrT -= dt;
@@ -4794,9 +5004,10 @@ function updateWorld(dt, active){
       const lock = active && p && Math.abs(p.x-e.x)<330 ? clamp((p.y-e.base)*0.12,-35,45) : 0;
       e.y = e.base + Math.sin(e.ph)*34 + lock;
     } else if(e.t === 'huepfer'){
+      if(e.verwirrT > 0) e.verwirrT -= dt;
       if(e.onG){
         e.hopCd -= dt;
-        if(e.hopCd <= 0 && active && p && !p.dead){
+        if(e.hopCd <= 0 && e.verwirrT <= 0 && active && p && !p.dead){
           e.hopCd = rnd(1.1, 1.7);
           e.dir = Math.sign((p.x + PW/2) - (e.x + e.w/2)) || 1;
           e.vx = e.dir * rnd(115, 165);
@@ -4819,7 +5030,10 @@ function updateWorld(dt, active){
     } else if(e.t === 'werfer'){
       if(e.wirft > 0) e.wirft -= dt;
       e.wurfCd -= dt;
-      if(e.wurfCd <= 0 && active && p && !p.dead && p.onGround){
+      if(e.verwirrT > 0){
+        e.verwirrT -= dt;
+        e.wirft=0;
+      }else if(e.wurfCd <= 0 && active && p && !p.dead && p.onGround){
         /* Er zielt nur auf Katzen am Boden – wer springt und saust, ist sicher */
         const dxP = (p.x + PW/2) - (e.x + e.w/2);
         const dyP = (p.y + PH) - (e.y + e.h);
@@ -4861,6 +5075,10 @@ function updateWorld(dt, active){
       }
     } else {
       e.ph += dt*(1.5 + Math.min(w.def.diff||0, 8)*0.12);
+      if(e.verwirrT > 0){
+        e.verwirrT -= dt;
+        e.x=clamp(e.x+e.dir*120*dt,e.a,Math.max(e.a,e.b-e.w));
+      }
       e.y = e.base + Math.sin(e.ph)*(44 + Math.min(w.def.diff||0, 7)*4);
     }
   }
@@ -4879,9 +5097,10 @@ function updateWorld(dt, active){
         {speed:110, life:0.4, grav:320});
       w.projektile.splice(i,1); continue;
     }
+    const trefferPad=nu.typ==='kruemel'?4:8;
     if(active && p && !p.dead && p.blink <= 0 && p.turbo <= 0 && p.superT <= 0
-       && nu.x > p.x - 8 && nu.x < p.x + p.w + 8
-       && nu.y > p.y - 8 && nu.y < p.y + p.h + 8){
+       && nu.x > p.x - trefferPad && nu.x < p.x + p.w + trefferPad
+       && nu.y > p.y - trefferPad && nu.y < p.y + p.h + trefferPad){
       w.projektile.splice(i,1);
       Game.killPlayer('enemy');
     }
@@ -5019,20 +5238,23 @@ function updateWorld(dt, active){
     B.ph += dt;
     switch(B.mode){
       case 'kreisen':
-        B.x += B.dir * (120 + B.hits*22) * dt;
+        B.x += B.dir * (112 + B.hits*16) * dt;
         B.y = B.flugY + Math.sin(B.ph*2.2) * 26;
         if(B.x < B.minX){ B.x = B.minX; B.dir = 1; }
         if(B.x + B.w > B.maxX + 76){ B.x = B.maxX + 76 - B.w; B.dir = -1; }
         B.kruemelT -= dt;
         if(B.kruemelT <= 0){
-          B.kruemelT = rnd(1.1, 1.7) - Math.min(B.hits*0.15, 0.5);
-          w.projektile.push({typ:'kruemel', x:B.x + B.w/2, y:B.y + B.h - 6,
-            vx: rnd(-30, 30), vy: 60, t: 5, rot: rnd(0,6.28)});
+          B.kruemelT=rnd(1.45,2)-Math.min(B.hits*.08,.24);
+          if(w.projektile.filter(n=>n.typ==='kruemel').length<4)
+            w.projektile.push({typ:'kruemel',x:B.x+B.w/2,y:B.y+B.h-6,
+              vx:rnd(-30,30),vy:60,t:5,rot:rnd(0,6.28)});
           Audio_.tone(500, 0.05, 'triangle', 0.07, -100);
         }
         if(B.t <= 0){
-          B.luegt = Math.random() < 0.45;
-          B.mode = 'droh'; B.t = 0.75;
+          B.zielX=gurrSicheresZiel(w,B,p.x+PW/2);
+          B.luegt=!B.letzteLuege&&Math.random()<.35;
+          B.letzteLuege=B.luegt;
+          B.mode='droh';B.t=.95;
           Audio_.tone(300, 0.2, 'square', 0.1, -80);
         }
         break;
@@ -5045,7 +5267,9 @@ function updateWorld(dt, active){
             Audio_.tone(420, 0.12, 'triangle', 0.1, 120);
           } else {
             B.mode = 'sturz';
-            B.zielX = p.x + PW/2;
+            /* Das Trefferfenster beginnt ohne alte Krümel im Rücken. */
+            for(let i=w.projektile.length-1;i>=0;i--)
+              if(w.projektile[i].typ==='kruemel')w.projektile.splice(i,1);
             Audio_.tone(260, 0.25, 'sawtooth', 0.12, -120);
           }
         }
@@ -5053,10 +5277,10 @@ function updateWorld(dt, active){
       case 'sturz': {
         const zx = clamp(B.zielX - B.w/2, B.minX, B.maxX + 76 - B.w);
         B.x = lerp(B.x, zx, dt*7);
-        B.y += 640 * dt;
+        B.y += 580 * dt;
         if(B.y + B.h >= B.bodenY){
           B.y = B.bodenY - B.h;
-          B.mode = 'steckt'; B.t = 1.7;
+          B.mode = 'steckt'; B.t = 2.4;
           Game.shake = 9; Audio_.puff(0.4);
           spawnParts(B.x + B.w/2, B.y + B.h, 14, '#bdb3a8', {speed:200, life:0.6});
         }
@@ -5220,11 +5444,7 @@ function updateWorld(dt, active){
   else if(bildY > bandUnten) tgtY = mitteY - bandUnten;
   tgtY = clamp(tgtY, 0, maxCamY(w));
   const k = active ? 1 - Math.pow(0.0016, dt) : 1 - Math.pow(0.02, dt);
-  /* Auto-Scroll (U-Bahn): die Kamera fährt unbeirrt vorwärts */
-  if(mechW.zug && active && !p.dead)
-    Game.cam.x = clamp(Game.cam.x + mechW.zug.tempo * dt, 0, Math.max(0, w.pxW - VW));
-  else
-    Game.cam.x = lerp(Game.cam.x, tgtX, k);
+  Game.cam.x = lerp(Game.cam.x, tgtX, k);
   Game.cam.y = lerp(Game.cam.y, tgtY, k);
 }
 
@@ -5811,6 +6031,32 @@ function drawWorld(){
   const x0 = Math.max(0, Math.floor(cx/TS)-1), x1 = Math.min(w.W-1, Math.ceil((cx+VW)/TS)+1);
   const y0 = Math.max(0, Math.floor(cy/TS)-1), y1 = Math.min(w.H-1, Math.ceil((cy+VH)/TS)+1);
 
+  /* Meisterpfad II: der rote Faden verbindet die Prüfungen, verrät aber
+     weder Sprungkurve noch Schalterlösung. */
+  const rotband = (w.def.mech || {}).rotband;
+  if(rotband && rotband.length > 1){
+    ctx.save();
+    ctx.lineCap='round';ctx.lineJoin='round';
+    ctx.beginPath();
+    rotband.forEach((k,i) => {
+      const rx=k[0]*TS+TS/2-cx, ry=k[1]*TS+TS/2-cy;
+      if(i)ctx.lineTo(rx,ry);else ctx.moveTo(rx,ry);
+    });
+    ctx.strokeStyle='rgba(70,18,35,.34)';ctx.lineWidth=7;ctx.stroke();
+    ctx.setLineDash([12,9]);ctx.lineDashOffset=-Game.scroll*42;
+    ctx.strokeStyle='rgba(231,62,92,.86)';ctx.lineWidth=3.5;ctx.stroke();
+    ctx.setLineDash([]);
+    for(const k of rotband){
+      const rx=k[0]*TS+TS/2-cx, ry=k[1]*TS+TS/2-cy;
+      if(rx < -20 || rx > VW+20 || ry < -20 || ry > VH+20) continue;
+      const checkpoint=w.checks.some(c=>Math.abs(c.x/TS-k[0])<1.2);
+      ctx.fillStyle=checkpoint?'rgba(255,214,102,.95)':'rgba(255,115,139,.88)';
+      ctx.beginPath();ctx.arc(rx,ry,checkpoint?6:3.4,0,6.2832);ctx.fill();
+      if(checkpoint)pfote(rx,ry-12,.58,true);
+    }
+    ctx.restore();
+  }
+
   /* Plattform-Kacheln */
   for(let y=y0;y<=y1;y++){
     for(let x=x0;x<=x1;x++){
@@ -5971,31 +6217,54 @@ function drawWorld(){
     const px = j.x - cx;
     if(px < -60 || px > VW + 60) continue;
     const by = j.baseY - cy;
+    const warnWackel = j.warn && !REDUCED_MOTION ? Math.sin(Game.scroll*42)*2 : 0;
     /* Düse */
     ctx.fillStyle = '#7a8896';
-    rr(px - 10, by - 8, 20, 8, 3); ctx.fill();
+    rr(px - 10 + warnWackel, by - 8, 20, 8, 3); ctx.fill();
     ctx.fillStyle = '#93a3b2';
-    rr(px - 5, by - 13, 10, 6, 2); ctx.fill();
-    if(j.an){
+    rr(px - 5 + warnWackel, by - 13, 10, 6, 2); ctx.fill();
+    if(j.warn){
+      ctx.save();
+      ctx.fillStyle='rgba(185,230,255,.8)';
+      for(let k=0;k<3;k++){
+        const hoch=((Game.scroll*70+k*11)%28);
+        ctx.globalAlpha=.25+.7*(1-hoch/28);
+        ctx.beginPath();ctx.arc(px+(k-1)*6,by-16-hoch,2.2,0,6.2832);ctx.fill();
+      }
+      ctx.restore();
+    }
+    if(j.power > 0.02){
       const ty2 = j.topY - cy;
+      const sway = REDUCED_MOTION ? 0 : Math.sin(Game.time*3.1+j.phase*6.2832)*8*j.power;
+      const wx = px+sway;
       const grd = ctx.createLinearGradient(0, ty2, 0, by);
-      grd.addColorStop(0, 'rgba(170,220,255,0.12)');
-      grd.addColorStop(0.25, 'rgba(170,220,255,0.5)');
-      grd.addColorStop(1, 'rgba(190,235,255,0.75)');
+      grd.addColorStop(0, `rgba(170,220,255,${0.08*j.power})`);
+      grd.addColorStop(0.25, `rgba(170,220,255,${0.42*j.power})`);
+      grd.addColorStop(1, `rgba(190,235,255,${0.78*j.power})`);
       ctx.fillStyle = grd;
-      const wob = Math.sin(Game.scroll*9 + j.x)*2.5;
       ctx.beginPath();
-      ctx.moveTo(px - 7 + wob, by - 10);
-      ctx.quadraticCurveTo(px - 13, (by+ty2)/2, px - 9, ty2 + 8);
-      ctx.lineTo(px + 9, ty2 + 8);
-      ctx.quadraticCurveTo(px + 13, (by+ty2)/2, px + 7 + wob, by - 10);
+      ctx.moveTo(px - 15, by - 10);
+      ctx.quadraticCurveTo(wx - 27, (by+ty2)/2, wx - 20, ty2 + 8);
+      ctx.lineTo(wx + 20, ty2 + 8);
+      ctx.quadraticCurveTo(wx + 27, (by+ty2)/2, px + 15, by - 10);
       ctx.closePath(); ctx.fill();
+      /* aufsteigende Wasserbänder zeigen Richtung und kräftigen Kern */
+      ctx.save();
+      ctx.globalAlpha=.25+.5*j.power;
+      ctx.strokeStyle='rgba(235,250,255,.95)';ctx.lineWidth=2;ctx.lineCap='round';
+      const spanne=Math.max(24,by-ty2-28);
+      for(let k=0;k<4;k++){
+        const yy=by-24-((Game.scroll*105+k*58)%spanne);
+        const qx=lerp(px,wx,clamp((by-yy)/Math.max(1,by-ty2),0,1));
+        ctx.beginPath();ctx.moveTo(qx-6,yy+4);ctx.lineTo(qx,yy-2);ctx.lineTo(qx+6,yy+4);ctx.stroke();
+      }
+      ctx.restore();
       /* Sprühkrone oben */
-      ctx.fillStyle = 'rgba(200,240,255,0.85)';
+      ctx.fillStyle = `rgba(200,240,255,${0.86*j.power})`;
       for(let k = 0; k < 5; k++){
         const ka = -0.9 + k*0.45, kr = 9 + Math.sin(Game.scroll*7 + k)*2;
         ctx.beginPath();
-        ctx.arc(px + Math.sin(ka)*kr*1.6, ty2 + 4 - Math.cos(ka)*kr, 2.6, 0, 6.2832);
+        ctx.arc(wx + Math.sin(ka)*kr*1.8, ty2 + 4 - Math.cos(ka)*kr, 2.8, 0, 6.2832);
         ctx.fill();
       }
     }
@@ -6008,16 +6277,21 @@ function drawWorld(){
     /* Kabel + Lampe */
     ctx.strokeStyle = 'rgba(30,24,44,0.85)'; ctx.lineWidth = 3;
     ctx.beginPath(); ctx.moveTo(lx, Math.max(-4, ly - 60)); ctx.lineTo(lx, ly); ctx.stroke();
-    /* Kegel */
-    const ex = lx + Math.sin(L.ang) * L.reich, ey = ly + Math.cos(L.ang) * L.reich;
+    /* Kegel: einzelne Randstrahlen enden an derselben Blockkante wie die
+       Kollision. So sehen sichere Kartonschatten auch wirklich sicher aus. */
     const halb = 0.34;
-    const e1x = lx + Math.sin(L.ang - halb) * L.reich, e1y = ly + Math.cos(L.ang - halb) * L.reich;
-    const e2x = lx + Math.sin(L.ang + halb) * L.reich, e2y = ly + Math.cos(L.ang + halb) * L.reich;
+    const mitteD=lichtStrahlLaenge(w,L,L.ang);
+    const ex=lx+Math.sin(L.ang)*mitteD,ey=ly+Math.cos(L.ang)*mitteD;
     const kg = ctx.createLinearGradient(lx, ly, ex, ey);
     kg.addColorStop(0, 'rgba(255,235,170,0.55)');
     kg.addColorStop(1, 'rgba(255,235,170,0.06)');
     ctx.fillStyle = kg;
-    ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(e1x, e1y); ctx.lineTo(e2x, e2y); ctx.closePath(); ctx.fill();
+    ctx.beginPath();ctx.moveTo(lx,ly);
+    for(let i=0;i<=12;i++){
+      const a=L.ang-halb+i/12*halb*2,d=lichtStrahlLaenge(w,L,a);
+      ctx.lineTo(lx+Math.sin(a)*d,ly+Math.cos(a)*d);
+    }
+    ctx.closePath();ctx.fill();
     /* Lampengehäuse */
     ctx.save();
     ctx.translate(lx, ly); ctx.rotate(-L.ang);
@@ -6052,14 +6326,6 @@ function drawWorld(){
       ctx.arc(px+10, py+m.h+7, 5, 0, 6.2832);
       ctx.arc(px+m.w-10, py+m.h+7, 5, 0, 6.2832); ctx.fill();
     }
-  }
-
-  /* Auto-Scroll: am linken Rand schimmert die Gefahr */
-  if((w.def.mech || {}).zug){
-    const zg = ctx.createLinearGradient(0, 0, 64, 0);
-    zg.addColorStop(0, 'rgba(255,92,120,' + (0.22 + 0.1*Math.sin(Game.scroll*6)) + ')');
-    zg.addColorStop(1, 'rgba(255,92,120,0)');
-    ctx.fillStyle = zg; ctx.fillRect(0, 0, 64, VH);
   }
 
   /* Gefahren (mit Bodenschatten für Sichtbarkeit) */
@@ -6200,6 +6466,15 @@ function drawWorld(){
     else if(e.t === 'huepfer') drawHuepfer(e, px, py);
     else if(e.t === 'werfer') drawWerfer(e, px, py);
     else drawFlyer(t.flyer, e, px, py);
+    if(e.verwirrT > 0 && e.t !== 'dog'){
+      ctx.save();
+      ctx.globalAlpha=.82+.18*Math.sin(Game.scroll*18);
+      ctx.fillStyle='#8fd0ff';
+      ctx.font='bold 17px "Segoe UI",system-ui,sans-serif';
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText('♪?',px+e.w/2,py-13+Math.sin(Game.scroll*6+e.ph)*2);
+      ctx.restore();
+    }
   }
   drawEasterDeko();
 
@@ -6852,11 +7127,16 @@ function drawGurr(B){
   const px = B.x - cx, py = B.y - cy;
   /* Sturzflug-Schatten als faire Warnung */
   if(B.mode === 'sturz' || B.mode === 'droh'){
-    const sx = (B.mode === 'sturz' ? B.x + B.w/2 : B.zielX || B.x + B.w/2) - cx;
+    const sx = (B.zielX || B.x + B.w/2) - cx;
     ctx.save();
     ctx.globalAlpha = 0.35 + 0.2*Math.sin(Game.scroll*16);
     ctx.fillStyle = '#1a1430';
     ctx.beginPath(); ctx.ellipse(sx, B.bodenY - cy - 4, 30, 7, 0, 0, 6.2832); ctx.fill();
+    ctx.globalAlpha=.82;
+    ctx.strokeStyle=B.luegt?'#ffd166':'#ff5c96';ctx.lineWidth=2.5;
+    if(B.luegt)ctx.setLineDash([6,5]);
+    ctx.beginPath();ctx.ellipse(sx,B.bodenY-cy-4,38,11,0,0,6.2832);ctx.stroke();
+    ctx.setLineDash([]);
     ctx.restore();
   }
   if(B.blink > 0 && Math.floor(B.blink*14)%2 === 0 && !B.dead) return;
@@ -7286,6 +7566,17 @@ function drawCat(){
   if(p.blink > 0 && Math.floor(p.blink*14) % 2 === 0 && !p.dead) return;
   const cx = Game.cam.x, cy = Game.cam.y;
   const bx = p.x - cx + PW/2, by = p.y - cy + PH;
+  const miauAlter=MIAU_COOLDOWN-Game.miauT;
+  if(!p.dead && Game.miauT>0 && miauAlter>=0 && miauAlter<.5){
+    const q=clamp(miauAlter/.5,0,1), weich=1-Math.pow(1-q,3);
+    ctx.save();
+    ctx.globalAlpha=(1-q)*.78;
+    ctx.strokeStyle='#ff8fb3';ctx.lineWidth=4-q*2;
+    ctx.beginPath();ctx.arc(bx,by-PH/2,38+(MIAU_RADIUS-38)*weich,0,6.2832);ctx.stroke();
+    ctx.strokeStyle='rgba(255,255,255,.72)';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.arc(bx,by-PH/2,31+(MIAU_RADIUS-31)*weich,0,6.2832);ctx.stroke();
+    ctx.restore();
+  }
   const moving = Math.abs(p.vx) > 25 && p.onGround;
   const swing = moving ? Math.sin(p.run*2) : 0;
   const bob = moving ? Math.abs(swing)*1.4 : 0;
@@ -7389,6 +7680,49 @@ function drawCat(){
     ctx.fillText('!', 24, -30 + Math.sin(Game.scroll*8)*2);
   }
   ctx.restore();
+
+  /* Sichtbares Reaktionsfenster im Garagenlicht: Farbe + Ring + Symbol. */
+  if((p.lichtT||0)>0 && !p.dead){
+    const q=clamp(p.lichtT/LICHT_WARNZEIT,0,1);
+    ctx.save();
+    ctx.globalAlpha=.72+.25*Math.sin(Game.scroll*22);
+    ctx.strokeStyle=q>.65?'#ff5c96':'#ffd166';
+    ctx.lineWidth=4;
+    ctx.beginPath();ctx.arc(bx,by-PH/2,43,0,Math.max(.12,q)*6.2832);ctx.stroke();
+    ctx.fillStyle=q>.65?'#ff5c96':'#ffd166';
+    ctx.font='900 22px "Segoe UI",system-ui,sans-serif';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('!',bx,by-96);
+    ctx.restore();
+  }
+
+  /* Wasserpfoten: zwei klar lesbare Aufzug-Schübe, die im Kern nachladen. */
+  if(!p.dead && (p.jetKontakt || p.jetExitT > 0 || p.jetPulseT > 0)){
+    ctx.save();
+    const restAlpha = p.jetKontakt ? 1 : clamp((p.jetExitT || 0)/JET_EXIT_GRACE,0,1);
+    for(let i=0;i<2;i++){
+      const x=bx-9+i*18, y=by-103;
+      const ladung=clamp((p.jetCharge||0)-i,0,1);
+      ctx.globalAlpha=(.28+.72*ladung)*restAlpha;
+      ctx.fillStyle='#aee5ff';ctx.strokeStyle='rgba(255,255,255,.95)';ctx.lineWidth=1.8;
+      ctx.beginPath();ctx.moveTo(x,y-8);ctx.quadraticCurveTo(x-7,y,x,y+7);
+      ctx.quadraticCurveTo(x+7,y,x,y-8);ctx.closePath();
+      if(ladung>.03)ctx.fill();ctx.stroke();
+    }
+    if(p.jetPulseT>0){
+      ctx.globalAlpha=clamp(p.jetPulseT/.28,0,1);
+      ctx.strokeStyle='rgba(190,238,255,.95)';ctx.lineWidth=3;
+      ctx.beginPath();ctx.arc(bx,by-36,42+(1-p.jetPulseT/.28)*24,0,6.2832);ctx.stroke();
+    }
+    ctx.restore();
+  }
+  /* Fortgeschrittenen-Flow bleibt rein kosmetisch/scorebasiert. */
+  if(!p.dead && p.flow>=2 && p.flowT>0 && !REDUCED_MOTION){
+    ctx.save();ctx.globalAlpha=.32+.11*p.flow;
+    for(let i=0;i<Math.min(3,p.flow-1);i++)
+      drawStern(bx-p.face*(36+i*15),by-19-i*9,3.5+i*.6,p.flow>=4?'#ffd166':'#9be8c8');
+    ctx.restore();
+  }
 
   /* Miau-Blase */
   if(Game.miauT > 0 && !p.dead){
@@ -7758,6 +8092,10 @@ function drawTitle(){
   uiButton(14, 12, 58, 46, Audio_.on ? '🔊' : '🔇', () => {
     const on = Audio_.toggle(); Game.toast(on ? 'Ton an' : 'Ton aus');
   }, {size:19, r:22, fill:'rgba(255,255,255,.82)'});
+  if(TOUCH_DEVICE && !imAppModus()){
+    uiButton(82, 12, 154, 46, '⛶  APP-MODUS', () => requestGameFullscreen(),
+      {size:13.5, r:22, fill:'rgba(255,255,255,.82)'});
+  }
   uiButton(VW/2-150, 262, 300, 58, '▶  Los geht’s!', () => {
     Audio_.sSelect(); Game.state = 'select'; Game.stateT = 0;
   }, {size:21, r:29});
@@ -8886,18 +9224,24 @@ function drawWin(){
 }
 
 function drawPause(){
+  const appKnopf = TOUCH_DEVICE && !imAppModus();
   ctx.save();
   ctx.fillStyle = 'rgba(40,25,50,0.55)'; ctx.fillRect(0,0,VW,VH);
-  panelBox(VW/2-210, VH/2-178, 420, 380, true);
-  textC('PÄUSCHEN', VW/2, VH/2-139, 34, '#9be8c8');
+  panelBox(VW/2-210, appKnopf ? 50 : VH/2-178, 420, appKnopf ? 445 : 380, true);
+  textC('PÄUSCHEN', VW/2, appKnopf ? 86 : VH/2-139, 34, '#9be8c8');
   ctx.restore();
   Game.uiRects = [];
-  const bh = TOUCH_DEVICE ? 52 : 46, y0 = VH/2-98, gap = 7;
-  uiButton(VW/2-155, y0, 310, bh, '▶  Weiterspielen', () => Game.togglePause());
-  uiButton(VW/2-155, y0+bh+gap, 310, bh, '↻  Neu starten', () => Game.requestRestart());
-  uiButton(VW/2-155, y0+(bh+gap)*2, 310, bh, '📖  Anleitung', () => Game.zeigeHilfe('pause'));
-  uiButton(VW/2-155, y0+(bh+gap)*3, 310, bh, '⌂  Zum Hauptmenü', () => Game.toMenu());
-  uiButton(VW/2-110, VH/2+151, 220, 42, Audio_.on ? '🔊  Ton ausschalten' : '🔇  Ton einschalten', () => {
+  const bh = TOUCH_DEVICE ? 52 : 46, y0 = appKnopf ? 120 : VH/2-98, gap = appKnopf ? 5 : 7;
+  const aktionen = [
+    ['▶  Weiterspielen', () => Game.togglePause()],
+    ['↻  Neu starten', () => Game.requestRestart()],
+    ['📖  Anleitung', () => Game.zeigeHilfe('pause')]
+  ];
+  if(appKnopf) aktionen.push(['⛶  App-Modus / Vollbild', () => requestGameFullscreen()]);
+  aktionen.push(['⌂  Zum Hauptmenü', () => Game.toMenu()]);
+  aktionen.forEach((a,i) => uiButton(VW/2-155, y0+(bh+gap)*i, 310, bh, a[0], a[1]));
+  uiButton(VW/2-110, appKnopf ? 425 : VH/2+151, 220, 42,
+    Audio_.on ? '🔊  Ton ausschalten' : '🔇  Ton einschalten', () => {
     const on = Audio_.toggle(); Game.toast(on ? 'Ton an' : 'Ton aus');
   }, {size:13.5,r:20,fill:'rgba(255,255,255,.86)'});
 }
@@ -9266,8 +9610,8 @@ const HILFE = [
   {titel:'So steuerst du', zeilen:[
     {ic:'tasten',   tt:'Laufen',            tx:'Pfeiltasten ← → (oder A und D). Am Handy: die runden Tasten unten.'},
     {ic:'sprung',   tt:'Springen',          tx:'↑ oder LEERTASTE – am Handy der große SPRUNG-Knopf. In der Luft nochmal drücken = Doppelsprung!'},
-    {ic:'miau',     tt:'Miauen',            tx:'C oder der grüne MIAU-Knopf: Das verwirrt Hunde und schaltet besondere Plattformen um.'},
-    {ic:'pausei',   tt:'Pause & Co.',       tx:'Der Pauseknopf öffnet Neustart, Anleitung, Hauptmenü und Ton. Tastatur: P/ESC, R und M.'}
+    {ic:'miau',     tt:'Miauen',            tx:'C oder der grüne MIAU-Knopf: Der Schreckpuls hält bis zu 3 nahe Gegner kurz auf und schaltet Miau-Plattformen um. Er besiegt niemanden.'},
+    {ic:'pausei',   tt:'Pause & Co.',       tx:'Der Pauseknopf öffnet Neustart, Anleitung, Hauptmenü und Ton. Am Handy ist dort auch App-Modus/Vollbild. Tastatur: P/ESC, R und M.'}
   ]},
   {titel:'Deine Katzen', zeilen:[
     {ic:'chester',  tt:'Chester',           tx:'Gemütlich & kuschelfest: 4 Herzen (bis zu 5), sein Kuschel-Schild fängt 1 Treffer ab, 10 Leckerlis = +1 Herz.'},
@@ -9298,10 +9642,10 @@ const HILFE = [
   ]},
   {titel:'Unterwegs in der Stadt', zeilen:[
     {ic:'feder',    tt:'Schaukeln & Ampeln', tx:'Pendel-Plattformen schwingen an Seilen. Absprung am höchsten Punkt trägt am weitesten – sagt Boris. Das ist Wissenschaft.'},
-    {ic:'schlecki', tt:'Fontänen',           tx:'Sprinkler tragen dich sanft nach oben, solange sie sprühen. Oben geht sogar noch ein Doppelsprung.'},
+    {ic:'schlecki', tt:'Wasserpfoten',        tx:'Im kräftigen Fontänenkern laden bis zu 2 Wasserpfoten. SPRUNG verbraucht eine für einen starken Schub – eine bleibt kurz nach dem Verlassen.'},
     {ic:'miau',     tt:'Miau-Blüten',        tx:'Rosa Plattformen sind da, mintfarbene nicht. Ein MIAU tauscht beide – überall im Level gleichzeitig!'},
-    {ic:'pausei',   tt:'Taschenlampen',      tx:'Helgas Lichtkegel tut weh. Feste Kartons werfen Schatten – wer dahinter wartet, ist unsichtbar. Karton-Doktrin.'},
-    {ic:'tasten',   tt:'Die Miezelinie',     tx:'Im U-Bahn-Level fährt das Bild von allein. Bleib vorn dran – die Bahn wartet auf niemanden!'},
+    {ic:'pausei',   tt:'Taschenlampen',      tx:'Feste Kartons werfen sichtbaren Schatten. Streift dich Helgas Licht, warnt ein !-Ring kurz: sofort in Deckung huschen!'},
+    {ic:'tasten',   tt:'Die Miezelinie',     tx:'Du bestimmst jetzt selbst das Tempo. Laufbänder und schnelle Wagenplattformen geben dem Bahnhof seinen Rhythmus.'},
     {ic:'gurke',    tt:'Zwischenbosse',      tx:'Lord Flusen: 4× bespringen, nie beim Wirbeln. Generalin Gurr: nur, wenn sie feststeckt. Und „!!“ ist IMMER gelogen.'}
   ]},
   {titel:'Gut zu wissen', zeilen:[
@@ -9820,7 +10164,7 @@ function drawDunkel(){
   const lichtR = p.superT > 0 || p.turbo > 0 ? 250 : (TOUCH_DEVICE ? 218 : 194);
   loch(p.x - Game.cam.x + PW/2, p.y - Game.cam.y + PH/2, lichtR, 1);
   if(Game.miauT>0) loch(p.x-Game.cam.x+PW/2,p.y-Game.cam.y+PH/2,
-    220+(1-clamp(Game.miauT/1.1,0,1))*120,0.48);
+    220+(1-clamp(Game.miauT/MIAU_COOLDOWN,0,1))*120,0.48);
   for(const c of w.checks) loch(c.x - Game.cam.x + 16, c.y - Game.cam.y + 8, 95, 0.9);
   loch(w.goal.x - Game.cam.x + TS/2, w.goal.y - Game.cam.y + 44, 135, 0.95);
   const wurm = i => [(i*577 + 260) % w.pxW,
@@ -12146,6 +12490,9 @@ window.__CATS = {
     BUDEN_PHYSIK},
   systems:{BOSS_LEVELS:[...BOSS_LEVELS], GOLD_STUFEN:GOLD_STUFEN.map(s=>({...s})),
     EASTER_EGGS:EASTER_EGGS.map(e=>({...e})), CUTSCENES,
+    MIAU_CONFIG:{RADIUS:MIAU_RADIUS,COOLDOWN:MIAU_COOLDOWN,MAX_ZIELE:MIAU_MAX_ZIELE},
+    LICHT_CONFIG:{WARNZEIT:LICHT_WARNZEIT},
+    lichtLinieFrei,lichtStrahlLaenge,gurrSicheresZiel,
     TURM_CONFIG:{NACH:TURM_NACH,ZIEL:TURM_ZIEL,ANZEIGE:TURM_ANZEIGE_ZIEL,GRAV:TURM_GRAV,BOUNCE:TURM_BOUNCE,MAX_VX:TURM_MAX_VX},
     FUNK_CONFIG:{DAUER:FUNK_DAUER,X:[...FUNK_X],Y:[...FUNK_Y]}},
   consts:{VW,VH,TS,GRAV,JUMP_V,JUMP2_V,PW,PH,MAXFALL,FIXED,COYOTE,BUFFER,CUT_JUMP},
