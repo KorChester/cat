@@ -7,6 +7,10 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Samtpfoten">
+<meta name="application-name" content="Samtpfoten">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./samtpfoten-apple-touch-icon.png">
 <title>SAMTPFOTEN – Kuschel-Jump&amp;Run</title>
 <style>
   :root{
@@ -67,11 +71,20 @@
     background:#fff;color:#c73e6b;font-size:16px;font-weight:900;letter-spacing:.02em;touch-action:manipulation}
   #mobileCoach #mobileStart{background:linear-gradient(135deg,#ff8fb3,#ff6f9e);color:#fff;border-color:#ff6f9e;
     box-shadow:0 7px 20px rgba(212,87,122,.28)}
+  #mobileCoach #mobileInstall{background:linear-gradient(135deg,#9be8c8,#64cfa6);color:#195f49;border-color:#64cfa6}
+  #mobileCoach #mobileInstall[hidden]{display:none}
   #mobileCoach #mobileContinue{min-height:44px;border-color:transparent;background:transparent;color:#80566a;font-size:13px}
-  #mobileIosHilfe{display:none;margin-top:12px;padding:12px 14px;border-radius:16px;background:#fff;border:2px dashed rgba(212,87,122,.45);
+  #mobileAudioStatus{display:flex;align-items:center;justify-content:center;gap:8px;min-height:34px;margin:10px 0 0;
+    padding:7px 12px;border-radius:14px;background:rgba(255,255,255,.72);color:#80566a;font-size:13px;font-weight:800}
+  #mobileAudioStatus .punkt{width:9px;height:9px;flex:0 0 9px;border-radius:50%;background:#e6a23c;box-shadow:0 0 0 4px rgba(230,162,60,.13)}
+  #mobileAudioStatus[data-state="running"]{color:#26785c}
+  #mobileAudioStatus[data-state="running"] .punkt{background:#55c997;box-shadow:0 0 0 4px rgba(85,201,151,.16)}
+  #mobileAudioStatus[data-state="error"]{color:#b33b5c}
+  #mobileAudioStatus[data-state="error"] .punkt{background:#e85f82;box-shadow:0 0 0 4px rgba(232,95,130,.14)}
+  #mobilePlattformHilfe{display:none;margin-top:12px;padding:12px 14px;border-radius:16px;background:#fff;border:2px dashed rgba(212,87,122,.45);
     color:#704c5d;font-size:14px;line-height:1.45}
-  #mobileIosHilfe.offen{display:block}
-  #mobileIosHilfe strong{display:block;margin-bottom:4px;color:#c73e6b}
+  #mobilePlattformHilfe.offen{display:block}
+  #mobilePlattformHilfe strong{display:block;margin-bottom:4px;color:#c73e6b}
   .sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;
     overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
   @media (pointer: coarse), (any-pointer: coarse){
@@ -154,7 +167,7 @@
 <div id="wrap"><div id="stage">
   <canvas id="game" width="960" height="540" tabindex="0" role="application"
     aria-label="Samtpfoten Jump-and-Run. Auf dem Handy mit den sichtbaren Richtungstasten, Sprung und Miau spielen."></canvas>
-  <div id="loader">LADE …<span class="tipp">Diese Vorschau kann das Spiel nicht ausf&uuml;hren.<br>iPhone: Gratis-App &bdquo;Documents&ldquo; (von Readdle) laden,<br>die Datei per Teilen dort hinein kopieren und antippen &ndash; dann l&auml;uft es.<br>Computer: Datei speichern und doppelklicken.</span></div>
+  <div id="loader">LADE …<span class="tipp">Diese Vorschau kann das Spiel nicht ausf&uuml;hren.<br>Handy: Am zuverl&auml;ssigsten die gehostete HTTPS-Adresse in Safari, Chrome, Firefox oder Samsung Internet &ouml;ffnen.<br>Der Ton startet nach deinem ersten Tipp.<br>Computer: Datei speichern und doppelklicken.</span></div>
 </div></div>
 <div id="dreh" role="dialog" aria-label="Querformat empfohlen">
   <div class="karte">
@@ -176,18 +189,22 @@
 </div>
 <button id="btnP" type="button" aria-label="Pause">Ⅱ</button>
 <button id="btnF" type="button" aria-label="Vollbild oder App-Modus öffnen">⛶</button>
-<div id="mobileCoach" role="dialog" aria-modal="true" aria-label="Handy-Spielmodus">
+<div id="mobileCoach" role="dialog" aria-modal="true" aria-labelledby="mobileCoachTitel">
   <div class="karte">
     <span class="badge">HANDY-MODUS</span>
-    <h2>Größer spielen. Sicher tippen.</h2>
-    <p>Starte das Spiel im Vollbild. Während einer Runde gehören auch Zwei-Daumen- und Doppeltipps sicher dem Spiel – ohne versehentlichen Browser-Zoom.</p>
-    <button id="mobileStart" type="button">⛶ SPIEL GROSS STARTEN</button>
-    <div id="mobileIosHilfe">
-      <strong>Auf dem iPhone ohne Adresszeile:</strong>
-      Tippe in Safari auf <b>Teilen</b> und dann auf <b>Zum Home-Bildschirm</b>.
-      Lass dort <b>Als Web-App öffnen</b> aktiviert und starte SAMTPFOTEN anschließend über das neue Pfoten-Icon.
+    <h2 id="mobileCoachTitel">Größer spielen. Mit Ton.</h2>
+    <p id="mobileCoachText">Ein Tipp aktiviert den Ton und – wenn dein Browser es unterstützt – den Vollbildmodus. Während einer Runde gehören Zwei-Daumen- und Doppeltipps sicher dem Spiel.</p>
+    <button id="mobileStart" type="button">⛶ MIT TON &amp; VOLLBILD STARTEN</button>
+    <button id="mobileInstall" type="button" hidden>📲 ALS APP INSTALLIEREN</button>
+    <div id="mobileAudioStatus" data-state="locked" role="status" aria-live="polite">
+      <span class="punkt" aria-hidden="true"></span>
+      <span id="mobileAudioText">Ton wird mit deinem Tipp aktiviert.</span>
     </div>
-    <button id="mobileContinue" type="button">Jetzt im Browser weiterspielen</button>
+    <div id="mobilePlattformHilfe">
+      <strong id="mobileHilfeTitel">Ohne Adresszeile spielen</strong>
+      <span id="mobileHilfeText">Öffne das Browser-Menü und füge SAMTPFOTEN zum Startbildschirm hinzu.</span>
+    </div>
+    <button id="mobileContinue" type="button">Mit Ton im Browser weiterspielen</button>
   </div>
 </div>
 <div id="a11yStatus" class="sr-only" role="status" aria-live="polite"></div>
@@ -226,7 +243,7 @@
 'use strict';
 
 /* ---------------- Grundkonstanten ---------------- */
-const GAME_VERSION = '17.1';
+const GAME_VERSION = '17.3';
 const VW = 960, VH = 540, TS = 40;
 const TOUCH_DEVICE = (
   (typeof matchMedia === 'function' && matchMedia('(pointer: coarse), (any-pointer: coarse)').matches) ||
@@ -253,11 +270,47 @@ function ansage(text){
   setTimeout(() => { el.textContent = String(text || ''); }, 20);
 }
 
+function istInstallierterAppModus(){
+  if(typeof document === 'undefined') return false;
+  const displayApp = typeof matchMedia === 'function'
+    && ['fullscreen','standalone','minimal-ui'].some(m => matchMedia(`(display-mode: ${m})`).matches);
+  return !!((typeof navigator !== 'undefined' && navigator.standalone) || displayApp);
+}
+
 function imAppModus(){
   if(typeof document === 'undefined') return false;
-  const displayApp = typeof matchMedia === 'function' && matchMedia('(display-mode: standalone)').matches;
-  return !!(document.fullscreenElement || document.webkitFullscreenElement
-    || (typeof navigator !== 'undefined' && navigator.standalone) || displayApp);
+  return !!(document.fullscreenElement || document.webkitFullscreenElement || istInstallierterAppModus());
+}
+
+function fullscreenAnfrage(){
+  if(typeof document === 'undefined') return null;
+  const root = document.documentElement;
+  return root && (root.requestFullscreen || root.webkitRequestFullscreen) || null;
+}
+
+function istSichererAppUrsprung(){
+  if(typeof location === 'undefined') return false;
+  const protokoll = String(location.protocol || '');
+  const host = String(location.hostname || '').toLowerCase();
+  const lokal = host === 'localhost' || host === '127.0.0.1' || host === '::1'
+    || host === '[::1]';
+  return protokoll === 'https:' || (protokoll === 'http:' && lokal);
+}
+
+function mobilePlattformInfo(){
+  const nav = typeof navigator !== 'undefined' ? navigator : {};
+  const ua = String(nav.userAgent || '');
+  const plattform = String(nav.platform || '');
+  const ios = /iPad|iPhone|iPod/i.test(ua)
+    || (/Mac/i.test(plattform) && Number(nav.maxTouchPoints || 0) > 1);
+  const android = /Android/i.test(ua);
+  return Object.freeze({
+    ios, android,
+    name: ios ? 'iPhone/iPad' : (android ? 'Android' : 'dein Handy'),
+    gehostet: istSichererAppUrsprung(),
+    kannVollbild: !!fullscreenAnfrage(),
+    installiert: istInstallierterAppModus()
+  });
 }
 
 function aktualisiereAppModus(){
@@ -267,49 +320,203 @@ function aktualisiereAppModus(){
   if(typeof resize === 'function' && canvas) resize();
 }
 
-function mobileCoachZeigen(iosHilfe){
+let INSTALL_AUFFORDERUNG = null;
+
+function mobileAudioStatusSetzen(status, text){
+  if(typeof document === 'undefined') return;
+  const box = document.getElementById('mobileAudioStatus');
+  const label = document.getElementById('mobileAudioText');
+  if(box) box.setAttribute('data-state', status || 'locked');
+  if(label) label.textContent = text || '';
+}
+
+function mobileCoachKonfigurieren(hilfeZeigen=false){
+  if(typeof document === 'undefined') return;
+  const p = mobilePlattformInfo();
+  const titel = document.getElementById('mobileCoachTitel');
+  const intro = document.getElementById('mobileCoachText');
+  const start = document.getElementById('mobileStart');
+  const install = document.getElementById('mobileInstall');
+  const hilfe = document.getElementById('mobilePlattformHilfe');
+  const hilfeTitel = document.getElementById('mobileHilfeTitel');
+  const hilfeText = document.getElementById('mobileHilfeText');
+
+  if(titel) titel.textContent = p.installiert ? 'App-Modus bereit. Jetzt mit Ton.' : 'Größer spielen. Mit Ton.';
+  if(intro) intro.textContent = p.installiert
+    ? 'SAMTPFOTEN läuft bereits ohne Browserleiste. Ein Tipp aktiviert jetzt noch Musik und Effekte.'
+    : (p.kannVollbild
+      ? 'Ein Tipp aktiviert Ton und Vollbild. Dauerhaft ohne Adresszeile kannst du SAMTPFOTEN zusätzlich als Web-App installieren.'
+      : 'Ein Tipp aktiviert den Ton. Für einen dauerhaften Modus ohne Adresszeile kannst du SAMTPFOTEN als Web-App zum Startbildschirm hinzufügen.');
+  if(start) start.textContent = p.installiert
+    ? '🔊 MIT TON SPIELEN'
+    : (p.kannVollbild ? '⛶ MIT TON & VOLLBILD STARTEN' : '🔊 TON AKTIVIEREN');
+  if(install){
+    install.hidden = !(INSTALL_AUFFORDERUNG && !p.installiert && p.gehostet);
+    install.textContent = '📲 ALS APP INSTALLIEREN';
+  }
+
+  let kopf = 'Ohne Adresszeile spielen';
+  let text;
+  if(p.ios){
+    kopf = 'Auf iPhone und iPad als Web-App';
+    text = 'Am zuverlässigsten in Safari auf Teilen → Zum Home-Bildschirm tippen, dort – falls angezeigt – „Als Web-App öffnen“ aktiviert lassen und danach über das Pfoten-Icon starten.';
+  } else if(p.android){
+    kopf = 'Auf Android als App';
+    text = INSTALL_AUFFORDERUNG
+      ? 'Tippe auf „Als App installieren“. Danach startet SAMTPFOTEN über das Pfoten-Icon in einem eigenen Fenster.'
+      : 'Im Browser-Menü (meist ⋮ oder +) „App installieren“ beziehungsweise „Zum Startbildschirm hinzufügen“ wählen und danach über das Pfoten-Icon starten.';
+  } else {
+    text = 'Im Browser-Menü „App installieren“ oder „Zum Startbildschirm hinzufügen“ wählen. Falls das nicht angeboten wird, kannst du trotzdem den Browser-Vollbildmodus nutzen.';
+  }
+  if(!p.gehostet) text += ' Die Installation funktioniert nur über HTTPS oder localhost – nicht über unverschlüsseltes HTTP und nicht beim direkten Öffnen der lokalen HTML-Datei.';
+  if(hilfeTitel) hilfeTitel.textContent = kopf;
+  if(hilfeText) hilfeText.textContent = text;
+  if(hilfe) hilfe.classList.toggle('offen', !!hilfeZeigen || !p.installiert);
+}
+
+let MOBILE_FOKUS_VORHER = null;
+
+function mobileCoachZeigen(hilfeZeigen=false){
   if(!TOUCH_DEVICE || typeof document === 'undefined') return;
   const coach = document.getElementById('mobileCoach');
-  const hilfe = document.getElementById('mobileIosHilfe');
+  if(coach && !coach.classList.contains('offen')) MOBILE_FOKUS_VORHER = document.activeElement || null;
+  mobileCoachKonfigurieren(hilfeZeigen);
   if(coach) coach.classList.add('offen');
-  if(hilfe) hilfe.classList.toggle('offen', !!iosHilfe);
+  const start = document.getElementById('mobileStart');
+  if(start && start.focus) start.focus({preventScroll:true});
 }
 
 function mobileCoachSchliessen(){
   if(typeof document === 'undefined') return;
   const coach = document.getElementById('mobileCoach');
   if(coach) coach.classList.remove('offen');
-  try { localStorage.setItem('samt-mobile-coach-v2','gesehen'); } catch(e){}
-  if(canvas) canvas.focus({preventScroll:true});
+  try { localStorage.setItem('samt-mobile-coach-v3','gesehen'); } catch(e){}
+  const zurueck = MOBILE_FOKUS_VORHER;
+  MOBILE_FOKUS_VORHER = null;
+  if(zurueck && zurueck.focus && zurueck.isConnected !== false) zurueck.focus({preventScroll:true});
+  else if(canvas) canvas.focus({preventScroll:true});
 }
 
 async function requestGameFullscreen(){
   if(typeof document === 'undefined') return false;
-  if(imAppModus()){ mobileCoachSchliessen(); aktualisiereAppModus(); return true; }
+  /* Beide freigabepflichtigen APIs werden synchron im Nutzertipp angestoßen.
+     Erst danach warten wir auf ihre Promises. */
+  const audioVersuch = Audio_.aktivieren(true);
+  if(imAppModus()){
+    const audioOk = await audioVersuch;
+    if(audioOk) mobileCoachSchliessen();
+    else mobileCoachZeigen(true);
+    aktualisiereAppModus();
+    return true;
+  }
   const root = document.documentElement;
-  const request = root && (root.requestFullscreen || root.webkitRequestFullscreen);
+  const request = fullscreenAnfrage();
   if(!request){
     mobileCoachZeigen(true);
-    ansage('Auf dem iPhone: Teilen und Zum Home-Bildschirm wählen.');
+    const p = mobilePlattformInfo();
+    const audioOk = await audioVersuch;
+    ansage(audioOk
+      ? `${p.name}: Ton läuft. Web-App-Hinweis geöffnet.`
+      : `${p.name}: Ton blockiert. Bitte erneut tippen und Medienlautstärke prüfen.`);
     return false;
   }
   try {
-    try {
-      await request.call(root, {navigationUI:'hide'});
-    } catch(ersterVersuch){
-      /* Ältere WebKit-Varianten kennen die Optionsform noch nicht. */
-      await request.call(root);
-    }
+    if(root.requestFullscreen) await root.requestFullscreen({navigationUI:'hide'});
+    else await root.webkitRequestFullscreen();
     if(typeof screen !== 'undefined' && screen.orientation && screen.orientation.lock){
       try { await screen.orientation.lock('landscape'); } catch(e){}
     }
-    mobileCoachSchliessen();
+    const audioOk = await audioVersuch;
+    if(audioOk) mobileCoachSchliessen();
+    else {
+      mobileCoachZeigen(true);
+      ansage('Vollbild läuft, aber der Ton ist noch blockiert. Bitte erneut auf Ton aktivieren tippen.');
+    }
     aktualisiereAppModus();
     return true;
   } catch(e){
     mobileCoachZeigen(true);
+    const audioOk = await audioVersuch;
+    ansage(audioOk
+      ? 'Ton läuft. Vollbild wurde vom Browser nicht freigegeben; App-Anleitung geöffnet.'
+      : 'Vollbild und Ton wurden noch nicht freigegeben. Bitte erneut tippen oder die App-Anleitung nutzen.');
     return false;
   }
+}
+
+async function installiereMobileApp(){
+  const audioVersuch = Audio_.aktivieren(true);
+  if(!INSTALL_AUFFORDERUNG){
+    mobileCoachZeigen(true);
+    await audioVersuch;
+    ansage('Installationsanleitung geöffnet.');
+    return false;
+  }
+  const aufforderung = INSTALL_AUFFORDERUNG;
+  try {
+    await aufforderung.prompt();
+    const wahl = await aufforderung.userChoice;
+    if(wahl && wahl.outcome === 'accepted'){
+      const audioOk = await audioVersuch;
+      Audio_.statusUI();
+      if(audioOk) ansage('Installation bestätigt. Ton läuft.');
+      else {
+        mobileCoachZeigen(true);
+        ansage('Installation bestätigt. Der Ton braucht noch einen weiteren Tipp.');
+      }
+    } else {
+      mobileCoachZeigen(true);
+      ansage('Installation abgebrochen. Spielen im Browser bleibt möglich.');
+    }
+    INSTALL_AUFFORDERUNG = null;
+    mobileCoachKonfigurieren(true);
+    return !!(wahl && wahl.outcome === 'accepted');
+  } catch(e){
+    INSTALL_AUFFORDERUNG = null;
+    mobileCoachZeigen(true);
+    ansage('Installation konnte nicht gestartet werden. Die Browser-Anleitung ist geöffnet.');
+    return false;
+  }
+}
+
+if(typeof addEventListener === 'function'){
+  addEventListener('beforeinstallprompt', ev => {
+    ev.preventDefault();
+    INSTALL_AUFFORDERUNG = ev;
+    mobileCoachKonfigurieren(false);
+  });
+  addEventListener('appinstalled', () => {
+    INSTALL_AUFFORDERUNG = null;
+    if(Audio_.bereit()) mobileCoachSchliessen();
+    else mobileCoachZeigen(true);
+    aktualisiereAppModus();
+    ansage('SAMTPFOTEN wurde als App installiert.');
+  });
+}
+
+if(typeof document !== 'undefined' && document.addEventListener){
+  document.addEventListener('keydown', ev => {
+    const coach = document.getElementById('mobileCoach');
+    if(!coach || !coach.classList.contains('offen')) return;
+    if(ev.key === 'Escape'){
+      ev.preventDefault();
+      if(ev.stopPropagation) ev.stopPropagation();
+      mobileCoachSchliessen();
+      return;
+    }
+    if(ev.key !== 'Tab') return;
+    const ids = ['mobileStart','mobileInstall','mobileContinue'];
+    const fokus = ids.map(id => document.getElementById(id))
+      .filter(el => el && !el.hidden && !el.disabled);
+    if(!fokus.length) return;
+    const aktuell = fokus.indexOf(document.activeElement);
+    const naechster = ev.shiftKey
+      ? (aktuell <= 0 ? fokus.length-1 : aktuell-1)
+      : (aktuell < 0 || aktuell >= fokus.length-1 ? 0 : aktuell+1);
+    ev.preventDefault();
+    if(ev.stopPropagation) ev.stopPropagation();
+    fokus[naechster].focus({preventScroll:true});
+  }, {capture:true});
 }
 
 const GRAV = 2000, MAXFALL = 950;
@@ -763,21 +970,21 @@ const LEVELS = [
   goal:[416,12]
 },
 {
-  name:"NEUN-KNOTEN-PFAD", sub:"Meisterpfad II · Drei Prüfungen, dein Tempo", theme:6, w:360, h:15, spawn:[2,12], diff:17,
-  solid:[[0,12,18,3],[23,12,14,3],[42,10,14,5],[61,12,15,3],[81,9,14,6],[100,12,10,3],[151,10,10,5],[166,12,8,3],[179,9,8,6],[192,12,8,3],[205,10,9,5],[219,12,11,3],[265,12,8,3],[286,6,7,9],[342,12,18,3]],
-  coins:[[2,11,10],[24,11,10],[43,9,10],[62,11,10],[82,8,10],[101,11,8],[152,9,8],[167,11,6],[180,8,6],[193,11,6],[206,9,7],[220,11,8],[235,9,5],[245,7,5],[255,9,5],[266,11,6],[287,5,6],[309,8,8],[343,11,8]],
-  enemies:[{"x":153,"y":10,"t":"dog","a":152,"b":159},{"x":186,"y":6,"t":"fly","a":186,"b":186},{"x":325,"y":6,"t":"motte","a":325,"b":325}],
-  hazards:[[184,9,2],[350,12,2]],
-  movers:[{"x":278,"y":11,"w":3,"dx":0,"dy":-1,"d":5,"s":95},{"x":299,"y":7,"w":3,"dx":1,"dy":0,"d":6,"s":110}],
-  yarn:[[50,8],[187,6],[314,7]],
-  checkpoints:[[104,12],[223,12],[268,12]],
-  broesel:[[235,10,5],[245,8,5],[255,10,5],[309,9,8]],
+  name:"MONDDÄCHER", sub:"Meisterpfad II · Klassischer Dachparcours", theme:6, w:300, h:15, spawn:[2,12], diff:17,
+  solid:[[0,12,20,3],[24,12,15,3],[43,10,14,5],[62,12,18,3],[84,9,15,6],[103,11,20,4],[127,9,15,6],[146,7,14,8],[164,10,18,5],[186,12,21,3],[211,10,16,5],[231,8,15,7],[250,11,20,4],[274,9,12,6],[290,12,10,3]],
+  coins:[[2,11,10],[24,11,6],[32,9,5],[44,9,10],[63,11,10],[85,8,10],[104,10,8],[112,8,5],[128,8,10],[147,6,9],[165,9,10],[187,11,8],[195,9,4],[212,9,10],[232,7,9],[251,10,8],[259,8,4],[275,8,8],[291,11,7]],
+  enemies:[{"x":49,"y":10,"t":"walk","a":46,"b":54},{"x":72,"y":8,"t":"fly","a":72,"b":72},{"x":134,"y":9,"t":"igel","a":130,"b":139},{"x":172,"y":10,"t":"dog","a":168,"b":179},{"x":218,"y":10,"t":"huepfer","a":214,"b":224},{"x":239,"y":6,"t":"fly","a":239,"b":239},{"x":281,"y":9,"t":"walk","a":277,"b":284}],
+  hazards:[[31,12,2],[112,11,2],[195,12,2],[258,11,2]],
+  movers:[],
+  yarn:[[50,8],[151,5],[279,7]],
+  checkpoints:[[106,11],[189,12],[253,11]],
+  broesel:[],
   federn:[],
-  milch:[[104,12],[268,12]],
-  gold:[290,3],
-  schlecki:[181,7],
-  mech:{"band":[[6,11,12,1],[23,13,12,-1],[42,13,10,1],[61,14,12,-1],[81,13,9,1],[100,9,12,-1]],"miau":[[115,10,5,1],[124,8,5,0],[133,10,5,1],[142,8,5,0],[322,10,5,1],[332,8,5,0]],"lampen":[[173,2,6,0.85,0],[200,2,6,1.05,0.5]],"rotband":[[4,11],[28,11],[47,9],[67,11],[86,8],[104,11],[117,9],[126,7],[135,9],[144,7],[155,9],[170,11],[182,8],[195,11],[208,9],[223,11],[237,9],[247,7],[257,9],[268,11],[280,8],[290,5],[302,6],[312,8],[324,9],[334,7],[347,11],[356,11]],"par":155},
-  goal:[356,12]
+  milch:[[106,11],[253,11]],
+  gold:[202,9],
+  schlecki:[170,8],
+  mech:{"par":78},
+  goal:[296,12]
 }
 ];
 /* ---------------- Story pro Level (20 Level, 3 Bosse) ---------------- */
@@ -801,7 +1008,7 @@ const STORY = [
  'Die ganze Reise hängt am Himmel. Fehlt nur noch der letzte Schritt.',
  'Es endet, wie es anfing: mit einer Gurke. Nur größer. DEUTLICH größer. Spring König Gurke 5× auf die Krone!',
  'MEISTERPFAD I: Glas, Seife, Fontänen und Gegenlauf-Bänder. Kein Sicherheitsnetz – nur Timing.',
- 'MEISTERPFAD II: Drei rote Knoten, drei Prüfungen. Lies den Pfad, wähle dein Tempo – und setz jedes MIAU bewusst.'
+ 'MEISTERPFAD II: Ein klassischer Lauf über feste Monddächer. Folge den Fischspuren, lande sauber – keine versteckten Schalter.'
 ];
 
 /* Welche Zwischenszene läuft vor welchem Level? */
@@ -921,26 +1128,287 @@ const CUTSCENES = {
 /* ---------------- Audio: sanfter Spieluhr-Synth ---------------- */
 const Audio_ = {
   ctx:null, master:null, musicGain:null, on:true, started:false, step:0, nextTime:0, timer:null,
-  init(){
-    if(this.ctx) return;
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if(!AC) return;
-    this.ctx = new AC();
-    this.master = this.ctx.createGain(); this.master.gain.value = 0.5;
-    this.master.connect(this.ctx.destination);
-    this.musicGain = this.ctx.createGain(); this.musicGain.gain.value = 0.16;
-    this.musicGain.connect(this.master);
+  unlocking:null, unlockStartedAt:0, unlockToken:0, generation:0,
+  needsUnlock:true, lastError:'', lastConfirm:-10, probe:null, confirmAfterUnlock:false,
+  gestureReady:null, gestureToken:0,
+  masterPegel:TOUCH_DEVICE ? 0.62 : 0.5,
+  musikPegel:TOUCH_DEVICE ? 0.19 : 0.16,
+  jetzt(){
+    return typeof performance !== 'undefined' && performance.now
+      ? performance.now() : Date.now();
   },
-  resume(){
-    this.init();
-    if(this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
-    if(!this.started && this.ctx){ this.started = true; this.startMusic(); }
+  verwerfeContext(schliessen=true){
+    const alt = this.ctx;
+    if(this.timer){ clearInterval(this.timer); this.timer = null; }
+    this.generation++;
+    this.unlockToken++;
+    this.unlocking = null;
+    this.unlockStartedAt = 0;
+    this.ctx = this.master = this.musicGain = null;
+    this.started = false;
+    this.nextTime = 0;
+    this.lastConfirm = -10;
+    this.probe = null;
+    if(alt){
+      try { alt.onstatechange = null; } catch(e){}
+      if(schliessen && alt.state !== 'closed' && typeof alt.close === 'function'){
+        try {
+          const ende = alt.close();
+          if(ende && typeof ende.catch === 'function') ende.catch(() => {});
+        } catch(e){}
+      }
+    }
+  },
+  init(){
+    if(this.ctx && this.ctx.state !== 'closed') return this.ctx;
+    if(this.ctx) this.verwerfeContext(false);
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC){
+      this.lastError = 'Web Audio wird von diesem Browser nicht unterstützt.';
+      this.statusUI();
+      return null;
+    }
+    try {
+      /* Auf unterstützten iPhones wird Web Audio damit wie Medienwiedergabe
+         behandelt, statt stumm am Klingelton-Schalter zu hängen. */
+      if(typeof navigator !== 'undefined' && navigator.audioSession)
+        navigator.audioSession.type = 'playback';
+    } catch(e){}
+    try {
+      const ctx = new AC();
+      const generation = ++this.generation;
+      this.ctx = ctx;
+      this.lastConfirm = -10;
+      this.probe = null;
+      this.master = ctx.createGain(); this.master.gain.value = this.on ? this.masterPegel : 0;
+      this.master.connect(ctx.destination);
+      this.musicGain = ctx.createGain(); this.musicGain.gain.value = this.musikPegel;
+      this.musicGain.connect(this.master);
+      ctx.onstatechange = () => {
+        if(this.ctx !== ctx || this.generation !== generation) return;
+        if(ctx.state === 'running' && !this.probe) this.bestaetigeAudio(ctx, generation);
+        else {
+          /* iOS kann Audio auch ohne Visibility-/Blur-Event unterbrechen.
+             Die erste Abweichung setzt deshalb selbst eine Zeitprobe; ein
+             späteres running darf diese Probe nicht vorzeitig löschen. */
+          if(!this.probe || this.probe.ctx !== ctx){
+            this.probe = {
+              ctx,
+              audioTime:Number(ctx.currentTime) || 0,
+              wall:this.jetzt()
+            };
+          }
+          this.needsUnlock = true;
+          this.statusUI();
+        }
+      };
+      this.needsUnlock = ctx.state !== 'running';
+      this.statusUI();
+      return ctx;
+    } catch(e){
+      this.verwerfeContext(true);
+      this.lastError = e && e.message ? e.message : 'AudioContext konnte nicht gestartet werden.';
+      this.statusUI();
+      return null;
+    }
+  },
+  bereit(){
+    return !!(this.on && !this.needsUnlock && this.ctx
+      && this.ctx.state === 'running' && this.started);
+  },
+  status(){
+    if(!this.on) return 'off';
+    if(this.bereit()) return 'running';
+    if(this.lastError) return 'error';
+    return 'locked';
+  },
+  statusUI(){
+    const status = this.status();
+    if(status === 'running'){
+      mobileAudioStatusSetzen('running',
+        'Ton läuft. Nichts hörbar? Medienlautstärke und Lautlos-Schalter prüfen.');
+    } else if(status === 'off'){
+      mobileAudioStatusSetzen('locked','Ton ist aus. Tippe auf den Lautsprecher zum Einschalten.');
+    } else if(status === 'error'){
+      mobileAudioStatusSetzen('error','Ton blockiert – bitte noch einmal tippen.');
+    } else {
+      mobileAudioStatusSetzen('locked','Ton wird mit deinem Tipp aktiviert.');
+    }
+  },
+  markUnterbrochen(){
+    if(this.ctx){
+      this.probe = {
+        ctx:this.ctx,
+        audioTime:Number(this.ctx.currentTime) || 0,
+        wall:this.jetzt()
+      };
+    }
+    this.needsUnlock = true;
+    this.statusUI();
+  },
+  contextLebendig(ctx){
+    if(!ctx || ctx.state !== 'running') return false;
+    const p = this.probe;
+    if(!p || p.ctx !== ctx) return true;
+    const vergangen = Math.max(0, this.jetzt() - p.wall);
+    if(vergangen < 80) return true;
+    return (Number(ctx.currentTime) || 0) > p.audioTime + 0.01;
+  },
+  stillerStartimpuls(ctx=this.ctx){
+    if(!ctx || !ctx.createBuffer || !ctx.createBufferSource) return;
+    try {
+      const puffer = ctx.createBuffer(1, 1, ctx.sampleRate || 44100);
+      const quelle = ctx.createBufferSource();
+      quelle.buffer = puffer;
+      quelle.connect(this.ctx === ctx && this.master ? this.master : ctx.destination);
+      quelle.start(0);
+    } catch(e){}
+  },
+  laufendBestaetigen(testTon=false, ctx=this.ctx, generation=this.generation){
+    if(!ctx || this.ctx !== ctx || this.generation !== generation || ctx.state !== 'running')
+      return false;
+    this.needsUnlock = false;
+    this.lastError = '';
+    this.probe = null;
+    if(!this.started){
+      this.started = true;
+      this.nextTime = ctx.currentTime + 0.05;
+      this.startMusic();
+    }
+    if(this.master) this.master.gain.value = this.on ? this.masterPegel : 0;
+    if(testTon && this.on && ctx.currentTime - this.lastConfirm > 0.3){
+      this.lastConfirm = ctx.currentTime;
+      this.tone(660,0.07,'triangle',0.085,100);
+      this.tone(880,0.10,'sine',0.065,60,0.075);
+    }
+    this.statusUI();
+    return true;
+  },
+  bestaetigeAudio(ctx=this.ctx, generation=this.generation){
+    const testTon = this.confirmAfterUnlock;
+    const ok = this.laufendBestaetigen(testTon, ctx, generation);
+    if(ok) this.confirmAfterUnlock = false;
+    return ok;
+  },
+  beginNutzerGeste(){
+    if(this.gestureReady === null){
+      this.gestureReady = this.bereit();
+      const token = ++this.gestureToken;
+      /* Der Snapshot gilt nur für diese synchrone Eventkette
+         (Document-Capture → Canvas/Button). */
+      Promise.resolve().then(() => {
+        if(this.gestureToken === token) this.gestureReady = null;
+      });
+    }
+    return this.gestureReady;
+  },
+  zustandVorNutzerGeste(){
+    const snapshot = this.gestureReady;
+    this.gestureReady = null;
+    this.gestureToken++;
+    return typeof snapshot === 'boolean' ? snapshot : this.bereit();
+  },
+  resume(testTon=false){
+    if(!this.on) return Promise.resolve(false);
+    if(testTon) this.confirmAfterUnlock = true;
+    const jetzt = this.jetzt();
+    if(this.unlocking && jetzt - this.unlockStartedAt < 1800) return this.unlocking;
+    if(this.unlocking){
+      this.unlockToken++;
+      this.unlocking = null;
+      this.unlockStartedAt = 0;
+    }
+    let ctx = this.init();
+    if(!ctx) return Promise.resolve(false);
+    if(this.needsUnlock && this.probe && !this.contextLebendig(ctx)){
+      this.verwerfeContext(true);
+      ctx = this.init();
+      if(!ctx) return Promise.resolve(false);
+    }
+    const generation = this.generation;
+    if(ctx.state === 'running')
+      return Promise.resolve(this.bestaetigeAudio(ctx, generation));
+    this.stillerStartimpuls(ctx);
+    this.needsUnlock = true;
+    this.lastError = '';
+    let ergebnis;
+    try {
+      ergebnis = typeof ctx.resume === 'function' ? ctx.resume() : null;
+    } catch(e){
+      this.lastError = e && e.message ? e.message : 'Tonfreigabe fehlgeschlagen.';
+      this.statusUI();
+      return Promise.resolve(false);
+    }
+    /* Einige Browser wechseln bereits synchron auf running. */
+    if(ctx.state === 'running'){
+      const ok = this.bestaetigeAudio(ctx, generation);
+      /* Eine exotische spätere Ablehnung darf trotz synchron laufendem Context
+         nicht als unbehandelte Promise im Browser landen. */
+      Promise.resolve(ergebnis).catch(() => {});
+      return Promise.resolve(ok);
+    }
+    const token = ++this.unlockToken;
+    this.unlockStartedAt = jetzt;
+    let timeoutId = null;
+    const ergebnisSignal = Promise.resolve(ergebnis)
+      .then(() => ({typ:'fertig'}), fehler => ({typ:'fehler', fehler}));
+    const timeoutSignal = new Promise(resolve => {
+      timeoutId = setTimeout(() => resolve({typ:'timeout'}), 1600);
+    });
+    const versuch = Promise.race([ergebnisSignal, timeoutSignal]).then(signal => {
+      if(this.ctx !== ctx || this.generation !== generation || this.unlockToken !== token)
+        return false;
+      if(signal.typ === 'fehler'){
+        this.needsUnlock = true;
+        this.lastError = signal.fehler && signal.fehler.message
+          ? signal.fehler.message : 'Tonfreigabe fehlgeschlagen.';
+        this.statusUI();
+        return false;
+      }
+      if(signal.typ === 'timeout'){
+        this.verwerfeContext(true);
+        this.needsUnlock = true;
+        this.lastError = 'Die Tonfreigabe antwortet nicht. Bitte noch einmal tippen.';
+        this.statusUI();
+        return false;
+      }
+      const ok = this.bestaetigeAudio(ctx, generation);
+      if(!ok){
+        this.needsUnlock = true;
+        this.lastError = 'Der Browser wartet noch auf einen Nutzer-Tipp.';
+        this.statusUI();
+      }
+      return ok;
+    });
+    this.unlocking = versuch;
+    versuch.finally(() => {
+      if(timeoutId !== null) clearTimeout(timeoutId);
+      if(this.unlocking === versuch){
+        this.unlocking = null;
+        this.unlockStartedAt = 0;
+      }
+    });
+    return versuch;
+  },
+  aktivieren(testTon=false){
+    this.on = true;
+    if(this.master) this.master.gain.value = this.masterPegel;
+    return this.resume(testTon);
+  },
+  nutzerSchalter(warBereit=this.zustandVorNutzerGeste()){
+    if(!warBereit){
+      this.aktivieren(true);
+      return true;
+    }
+    this.on = false;
+    if(this.master) this.master.gain.value = 0;
+    this.verwerfeContext(true);
+    this.confirmAfterUnlock = false;
+    this.statusUI();
+    return false;
   },
   toggle(){
-    this.on = !this.on;
-    if(this.master) this.master.gain.value = this.on ? 0.5 : 0;
-    if(this.on && this.ctx) this.nextTime = this.ctx.currentTime + 0.05;
-    return this.on;
+    return this.nutzerSchalter(this.bereit());
   },
   tone(freq, dur, type='sine', vol=0.2, slide=0, delay=0){
     if(!this.ctx || !this.on) return;
@@ -1303,8 +1771,13 @@ const KEYMAP = { ArrowLeft:'left', KeyA:'left', ArrowRight:'right', KeyD:'right'
 function bindInput(canvas){
   addEventListener('keydown', e => {
     Input.anyPressed = true;
-    Audio_.resume();
-    if(e.code==='KeyM'){ const on = Audio_.toggle(); Game.toast(on ? 'Ton an' : 'Ton aus'); }
+    const tonWarBereit = Audio_.bereit();
+    if(e.code === 'KeyM'){
+      const on = Audio_.nutzerSchalter(tonWarBereit);
+      Game.toast(on ? 'Ton an' : 'Ton aus');
+    } else {
+      Audio_.resume();
+    }
 
     /* ---- Titelbildschirm: Leertaste startet ---- */
     if(Game.state === 'title'){
@@ -1544,12 +2017,30 @@ function bindInput(canvas){
     }
     last = 0; acc = 0;
   };
-  addEventListener('blur', automatischPausieren);
-  addEventListener('pagehide', automatischPausieren);
+  const hintergrundPausieren = () => {
+    Audio_.markUnterbrochen();
+    automatischPausieren();
+  };
+  addEventListener('blur', hintergrundPausieren);
+  addEventListener('pagehide', hintergrundPausieren);
   document.addEventListener('visibilitychange', () => {
-    if(document.hidden) automatischPausieren();
-    else { last = 0; acc = 0; }
+    if(document.hidden) hintergrundPausieren();
+    else {
+      last = 0; acc = 0;
+      if(Audio_.on) Audio_.statusUI();
+    }
   });
+  /* Auch Overlays und Browser-Rückkehr entsperren Audio beim nächsten echten
+     Nutzerkontakt. Das ist insbesondere für iOS "interrupted" wichtig. */
+  const audioBeimNaechstenTipp = () => {
+    Audio_.beginNutzerGeste();
+    if(Audio_.on && (!Audio_.ctx || Audio_.ctx.state !== 'running' || Audio_.needsUnlock))
+      Audio_.resume(false);
+  };
+  if(typeof PointerEvent !== 'undefined')
+    document.addEventListener('pointerdown', audioBeimNaechstenTipp, {passive:true,capture:true});
+  else
+    document.addEventListener('touchend', audioBeimNaechstenTipp, {passive:true,capture:true});
 
   /* Tippen/Klicken auf dem Spielfeld (Katzenwahl + Weiter-Bildschirme) */
   const toCanvas = (cx, cy) => {
@@ -1557,6 +2048,7 @@ function bindInput(canvas){
     return [ (cx - r.left) / r.width * VW, (cy - r.top) / r.height * VH ];
   };
   const tap = (cx, cy) => {
+    Audio_.beginNutzerGeste();
     Audio_.resume(); Input.anyPressed = true;
     const [x, y] = toCanvas(cx, cy);
     Game.tapAt(x, y);
@@ -1724,15 +2216,25 @@ function bindInput(canvas){
   }
   const vollBtn = document.getElementById('btnF');
   if(vollBtn) vollBtn.addEventListener('click', ev => {
-    ev.preventDefault(); Audio_.resume(); requestGameFullscreen();
+    ev.preventDefault(); requestGameFullscreen();
   }, {passive:false});
   const mobileStart = document.getElementById('mobileStart');
   if(mobileStart) mobileStart.addEventListener('click', ev => {
-    ev.preventDefault(); Audio_.resume(); requestGameFullscreen();
+    ev.preventDefault(); requestGameFullscreen();
+  }, {passive:false});
+  const mobileInstall = document.getElementById('mobileInstall');
+  if(mobileInstall) mobileInstall.addEventListener('click', ev => {
+    ev.preventDefault(); installiereMobileApp();
   }, {passive:false});
   const mobileContinue = document.getElementById('mobileContinue');
   if(mobileContinue) mobileContinue.addEventListener('click', ev => {
-    ev.preventDefault(); Audio_.resume(); mobileCoachSchliessen();
+    ev.preventDefault();
+    const audioVersuch = Audio_.aktivieren(true);
+    if(Audio_.bereit()) mobileCoachSchliessen();
+    else Promise.resolve(audioVersuch).then(ok => {
+      if(ok) mobileCoachSchliessen();
+      else mobileCoachZeigen(true);
+    });
   }, {passive:false});
   const portraitWeiter = document.getElementById('portraitWeiter');
   if(portraitWeiter) portraitWeiter.addEventListener('click', ev => {
@@ -6031,32 +6533,6 @@ function drawWorld(){
   const x0 = Math.max(0, Math.floor(cx/TS)-1), x1 = Math.min(w.W-1, Math.ceil((cx+VW)/TS)+1);
   const y0 = Math.max(0, Math.floor(cy/TS)-1), y1 = Math.min(w.H-1, Math.ceil((cy+VH)/TS)+1);
 
-  /* Meisterpfad II: der rote Faden verbindet die Prüfungen, verrät aber
-     weder Sprungkurve noch Schalterlösung. */
-  const rotband = (w.def.mech || {}).rotband;
-  if(rotband && rotband.length > 1){
-    ctx.save();
-    ctx.lineCap='round';ctx.lineJoin='round';
-    ctx.beginPath();
-    rotband.forEach((k,i) => {
-      const rx=k[0]*TS+TS/2-cx, ry=k[1]*TS+TS/2-cy;
-      if(i)ctx.lineTo(rx,ry);else ctx.moveTo(rx,ry);
-    });
-    ctx.strokeStyle='rgba(70,18,35,.34)';ctx.lineWidth=7;ctx.stroke();
-    ctx.setLineDash([12,9]);ctx.lineDashOffset=-Game.scroll*42;
-    ctx.strokeStyle='rgba(231,62,92,.86)';ctx.lineWidth=3.5;ctx.stroke();
-    ctx.setLineDash([]);
-    for(const k of rotband){
-      const rx=k[0]*TS+TS/2-cx, ry=k[1]*TS+TS/2-cy;
-      if(rx < -20 || rx > VW+20 || ry < -20 || ry > VH+20) continue;
-      const checkpoint=w.checks.some(c=>Math.abs(c.x/TS-k[0])<1.2);
-      ctx.fillStyle=checkpoint?'rgba(255,214,102,.95)':'rgba(255,115,139,.88)';
-      ctx.beginPath();ctx.arc(rx,ry,checkpoint?6:3.4,0,6.2832);ctx.fill();
-      if(checkpoint)pfote(rx,ry-12,.58,true);
-    }
-    ctx.restore();
-  }
-
   /* Plattform-Kacheln */
   for(let y=y0;y<=y1;y++){
     for(let x=x0;x<=x1;x++){
@@ -8089,11 +8565,14 @@ function drawTitle(){
     Audio_.tone(360+Game.moonTaps*35,.08,'sine',.07);
     if(Game.moonTaps>=5) findeEi('mond','Der fünfte Mond miaut zurück!');
   }});
-  uiButton(14, 12, 58, 46, Audio_.on ? '🔊' : '🔇', () => {
-    const on = Audio_.toggle(); Game.toast(on ? 'Ton an' : 'Ton aus');
+  const tonWarBereit = Audio_.bereit();
+  const tonSymbol = !Audio_.on ? '🔇' : (tonWarBereit ? '🔊' : '🔈');
+  uiButton(14, 12, 58, 46, tonSymbol, () => {
+    const on = Audio_.nutzerSchalter(); Game.toast(on ? 'Ton an' : 'Ton aus');
   }, {size:19, r:22, fill:'rgba(255,255,255,.82)'});
   if(TOUCH_DEVICE && !imAppModus()){
-    uiButton(82, 12, 154, 46, '⛶  APP-MODUS', () => requestGameFullscreen(),
+    const modusText = mobilePlattformInfo().kannVollbild ? '📲  APP / VOLLBILD' : '📲  APP-MODUS';
+    uiButton(82, 12, 154, 46, modusText, () => mobileCoachZeigen(true),
       {size:13.5, r:22, fill:'rgba(255,255,255,.82)'});
   }
   uiButton(VW/2-150, 262, 300, 58, '▶  Los geht’s!', () => {
@@ -8114,7 +8593,7 @@ function drawTitle(){
   ctx.restore();
   /* Fußzeile: Version + kleine Hinweise */
   ctx.save(); ctx.globalAlpha = 0.55;
-  textC(TOUCH_DEVICE ? '🔊 oben links  ·  läuft komplett im Browser' : 'M = Ton an/aus  ·  läuft komplett im Browser',
+  textC(TOUCH_DEVICE ? '🔈 oben links aktiviert Ton  ·  läuft komplett im Browser' : 'M = Ton an/aus  ·  läuft komplett im Browser',
         14, VH-16, 10.5, '#cdb4ff', 'left', '600');
   textC('Version ' + GAME_VERSION, VW-14, VH-16, 10.5, '#cdb4ff', 'right', '600');
   ctx.restore();
@@ -9225,6 +9704,7 @@ function drawWin(){
 
 function drawPause(){
   const appKnopf = TOUCH_DEVICE && !imAppModus();
+  const tonWarBereit = Audio_.bereit();
   ctx.save();
   ctx.fillStyle = 'rgba(40,25,50,0.55)'; ctx.fillRect(0,0,VW,VH);
   panelBox(VW/2-210, appKnopf ? 50 : VH/2-178, 420, appKnopf ? 445 : 380, true);
@@ -9237,12 +9717,15 @@ function drawPause(){
     ['↻  Neu starten', () => Game.requestRestart()],
     ['📖  Anleitung', () => Game.zeigeHilfe('pause')]
   ];
-  if(appKnopf) aktionen.push(['⛶  App-Modus / Vollbild', () => requestGameFullscreen()]);
+  if(appKnopf) aktionen.push([
+    mobilePlattformInfo().kannVollbild ? '📲  App / Vollbild einrichten' : '📲  App-Modus einrichten',
+    () => mobileCoachZeigen(true)
+  ]);
   aktionen.push(['⌂  Zum Hauptmenü', () => Game.toMenu()]);
   aktionen.forEach((a,i) => uiButton(VW/2-155, y0+(bh+gap)*i, 310, bh, a[0], a[1]));
   uiButton(VW/2-110, appKnopf ? 425 : VH/2+151, 220, 42,
-    Audio_.on ? '🔊  Ton ausschalten' : '🔇  Ton einschalten', () => {
-    const on = Audio_.toggle(); Game.toast(on ? 'Ton an' : 'Ton aus');
+    !Audio_.on ? '🔇  Ton einschalten' : (tonWarBereit ? '🔊  Ton ausschalten' : '🔈  Ton aktivieren'), () => {
+    const on = Audio_.nutzerSchalter(); Game.toast(on ? 'Ton an' : 'Ton aus');
   }, {size:13.5,r:20,fill:'rgba(255,255,255,.86)'});
 }
 
@@ -12449,10 +12932,17 @@ function boot(){
   if(loader) loader.style.display = 'none';
 
   Game.ready = true;
+  Audio_.statusUI();
+  if(typeof navigator !== 'undefined' && navigator.serviceWorker
+    && istSichererAppUrsprung()){
+    navigator.serviceWorker.register('./sw.js').catch(() => {
+      /* Online-Spiel bleibt vollständig nutzbar; nur Offline/App-Cache fehlt. */
+    });
+  }
   aktualisiereAppModus();
   if(TOUCH_DEVICE && !imAppModus()){
     let gesehen = false;
-    try { gesehen = localStorage.getItem('samt-mobile-coach-v2') === 'gesehen'; } catch(e){}
+    try { gesehen = localStorage.getItem('samt-mobile-coach-v3') === 'gesehen'; } catch(e){}
     if(!gesehen) mobileCoachZeigen(false);
   }
   syncTouchUI(true);
@@ -12463,7 +12953,9 @@ function boot(){
         snapshot:() => ({
           version:GAME_VERSION,state:Game.state,paused:Game.paused,level:Game.levelIdx,
           touch:TOUCH_DEVICE,reducedMotion:REDUCED_MOTION,drawDpr:DRAW_DPR,
-          particles:parts.length,canvas:{width:canvas.width,height:canvas.height}
+          particles:parts.length,canvas:{width:canvas.width,height:canvas.height},
+          audio:{on:Audio_.on,state:Audio_.ctx ? Audio_.ctx.state : 'locked',
+            started:Audio_.started,status:Audio_.status(),lastError:Audio_.lastError}
         })
       })
     });
@@ -12475,15 +12967,18 @@ function bootSicher(){
   try { boot(); }
   catch(err){
     zeigeFehler('Das Spiel konnte nicht starten:\n' + (err && err.message ? err.message : err) +
-                '\n\nTipp: am Computer öffnen oder am iPhone mit der Gratis-App „Documents“ (Readdle).');
+                '\n\nTipp: Nutze am Handy die gehostete HTTPS-Adresse in Safari, Chrome, Firefox oder Samsung Internet.');
   }
 }
 
 /* Test-Schnittstelle */
 window.__CATS = {
-  Game, Input, LEVELS, CATS, THEMES, buildWorld, solidAt, Save, render, syncTouchUI, baueTurmKurs,
+  Game, Input, Audio:Audio_, LEVELS, CATS, THEMES, buildWorld, solidAt, Save, render, syncTouchUI, baueTurmKurs,
   baueFunkBrett,funkOptionenFuerReihe,funkPlaneRoute,funkAktuellesZiel,funkDirector,funkKnotenUnter,
   funkToastPosition,
+  mobile:{plattformInfo:mobilePlattformInfo,fullscreenAnfrage,imAppModus,
+    istInstallierterAppModus,mobileCoachZeigen,mobileCoachKonfigurieren,
+    requestGameFullscreen,installiereMobileApp},
   arcade:{arcadeRang,miniCountdown,vogelY,vogelErzeugen,spawnVogelWelle,vogelGefangen,
     walkTreffer,walkFehler,walkRangGrenzen,budenZielY,budenWinkelFuerZiel,budenLoesungFuerZiel,
     budenGuterTreffer,budenFehler,arcadeHilfe,
@@ -12522,7 +13017,7 @@ window.__CATS = {
 
 window.addEventListener('error', e => {
   if(!Game.ready) zeigeFehler('Fehler beim Start:\n' + (e.message || 'unbekannt') +
-                              '\n\nTipp: am Computer öffnen oder am iPhone mit der Gratis-App „Documents“ (Readdle).');
+                              '\n\nTipp: Nutze am Handy die gehostete HTTPS-Adresse in Safari, Chrome, Firefox oder Samsung Internet.');
 });
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bootSicher);
 else bootSicher();
