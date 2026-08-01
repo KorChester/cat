@@ -237,13 +237,13 @@
 <script>
 /* =====================================================================
    SAMTPFOTEN – ein Kuschel-Jump'n'Run mit Chester & Chase
-   20 Level, 2 spielbare Katzen, alles in einer Datei.
+   22 Level, 2 spielbare Katzen, alles in einer Datei.
    ===================================================================== */
 (() => {
 'use strict';
 
 /* ---------------- Grundkonstanten ---------------- */
-const GAME_VERSION = '17.3';
+const GAME_VERSION = '17.4';
 const VW = 960, VH = 540, TS = 40;
 const TOUCH_DEVICE = (
   (typeof matchMedia === 'function' && matchMedia('(pointer: coarse), (any-pointer: coarse)').matches) ||
@@ -580,7 +580,7 @@ const RENN_KATZEN = [
    spruch:'„Ich bin klein, mein Karton ist frech.“'}
 ];
 
-/* ---------------- Die 7 Welten ---------------- */
+/* ---------------- Welten und Nachspiel-Stimmungen ---------------- */
 const THEMES = [
  {key:'wohnzimmer', name:'ABENDTERRASSE', sub:'Feierabend auf Nachbars Terrasse', dark:false,
   sky:['#ffeeda','#ffd9c2','#f6bda6'], plat:'cushion',
@@ -645,7 +645,15 @@ const THEMES = [
  {key:'garagen', name:'GARAGEN-HOF', sub:'Leise! Der Nachtwächter macht die Runde', dark:true,
   sky:['#181428','#241d3a','#33294e'], plat:'wood',
   pc:{fill:'#8a744c', deep:'#75613c', edge:'#57462a', top:'#a58b5e'},
-  walker:'sauger', flyer:'motte', hazard:'antenne', accent:'#ffd166'}
+  walker:'sauger', flyer:'motte', hazard:'antenne', accent:'#ffd166'},
+ {key:'dach', name:'MORGENROTE DÄCHER', sub:'Das rote Band glüht im ersten Licht', dark:false,
+  sky:['#6e5fa8','#ef91a7','#ffd7a1'], plat:'roof',
+  pc:{fill:'#73506c', deep:'#5b4058', edge:'#a56d82', top:'#f09aac'},
+  walker:'taube', flyer:'vogel', hazard:'antenne', accent:'#ff5c72'},
+ {key:'traum', name:'WINDPFOTEN-HIMMEL', sub:'Aurora über dem letzten Lichtknoten', dark:true,
+  sky:['#101b45','#273f78','#7859a8'], plat:'star',
+  pc:{fill:'#365789', deep:'#29446f', edge:'#668bd0', top:'#9be8c8'},
+  walker:'schaf', flyer:'schnuppe', hazard:'kristall', accent:'#9be8c8'}
 ];
 
 /* ---------------- LEVELS (werden vom Generator ersetzt) ---------------- */
@@ -985,9 +993,43 @@ const LEVELS = [
   schlecki:[170,8],
   mech:{"par":78},
   goal:[296,12]
+},
+{
+  name:"ROTBAND-EXPRESS", sub:"Laternen-Auftrag I · Volles Tempo!", theme:16, w:500, h:15, spawn:[2,12], diff:17,
+  solid:[[0,12,30,3],[33,12,25,3],[61,11,26,4],[91,12,29,3],[124,10,28,5],[156,12,32,3],[192,11,10,4],[208,11,9,4],[221,9,28,6],[253,12,34,3],[268,6,8,1],[291,10,26,5],[321,12,20,3],[347,12,4,3],[355,9,28,6],[387,11,30,4],[421,12,30,3],[455,10,20,5],[479,12,21,3]],
+  coins:[[3,11,8],[13,9,4],[20,10,6],[34,11,8],[46,9,5],[53,11,4],[62,10,7],[72,8,5],[81,10,5],[92,11,8],[104,9,5],[114,11,5],[125,9,8],[136,7,5],[145,9,6],[157,11,8],[169,9,5],[180,11,6],[193,10,6],[202,9,6],[210,10,6],[222,8,8],[233,6,5],[242,8,6],[254,11,8],[264,9,5],[269,5,6],[278,10,7],[292,9,8],[304,7,5],[311,9,5],[322,11,7],[332,9,5],[341,10,6],[347,11,4],[356,8,8],[368,6,5],[377,8,5],[388,10,8],[400,8,5],[409,10,6],[422,11,8],[434,9,5],[443,10,6],[456,9,8],[466,7,5],[480,11,8],[490,10,6]],
+  enemies:[{"x":75,"y":11,"t":"igel","a":72,"b":82},{"x":139,"y":10,"t":"walk","a":132,"b":147},{"x":173,"y":12,"t":"dog","a":168,"b":182},{"x":214,"y":7,"t":"fly","a":214,"b":214},{"x":304,"y":10,"t":"huepfer","a":298,"b":312},{"x":365,"y":9,"t":"igel","a":360,"b":370},{"x":396,"y":11,"t":"dog","a":391,"b":401}],
+  hazards:[[51,12,2],[111,12,2],[143,10,2],[179,12,2],[236,9,2],[278,12,2],[309,10,2],[378,9,2],[407,11,2]],
+  movers:[],
+  yarn:[[74,7],[214,8],[369,5]],
+  checkpoints:[[94,12],[194,11],[294,10],[390,11]],
+  broesel:[[202,11,6],[341,12,6]],
+  federn:[[265,12]],
+  milch:[[160,12],[390,11]],
+  gold:[271,5],
+  schlecki:[246,7],
+  mech:{"rush":[[6,12,12,1],[94,12,12,1],[225,12,9,1],[324,12,12,1],[424,14,12,1],[458,10,10,1]],"par":125},
+  goal:[496,12]
+},
+{
+  name:"WINDPFOTEN-STAFFEL", sub:"Laternen-Auftrag II · Dem Licht nach!", theme:17, w:520, h:15, spawn:[2,12], diff:17,
+  solid:[[0,12,24,3],[28,11,20,4],[52,9,24,6],[80,12,28,3],[112,10,26,5],[142,12,30,3],[176,9,22,6],[202,11,10,4],[218,11,12,4],[234,9,24,6],[262,12,30,3],[296,10,26,5],[326,7,24,8],[329,3,8,1],[354,11,12,4],[372,11,12,4],[388,9,25,6],[417,12,30,3],[451,9,25,6],[480,11,14,4],[500,11,20,4]],
+  coins:[[3,11,8],[13,9,5],[20,11,4],[29,10,7],[39,8,5],[45,10,3],[53,8,8],[63,5,5],[70,8,6],[81,11,8],[92,9,5],[102,11,5],[113,9,8],[124,7,5],[132,9,5],[143,11,8],[154,9,5],[164,11,6],[177,8,7],[187,5,5],[193,8,4],[203,10,7],[212,8,6],[220,10,8],[235,8,8],[245,5,5],[252,8,6],[263,11,8],[273,9,5],[283,11,6],[297,9,8],[308,6,5],[316,9,5],[327,6,8],[329,2,8],[341,5,6],[355,10,7],[366,8,6],[374,10,8],[389,8,8],[399,5,5],[407,8,6],[418,11,8],[429,9,5],[439,11,6],[452,8,8],[462,5,5],[470,8,6],[481,10,8],[492,8,6],[501,10,8],[511,9,5]],
+  enemies:[{"x":37,"y":11,"t":"igel","a":33,"b":44},{"x":102,"y":12,"t":"walk","a":99,"b":106},{"x":124,"y":10,"t":"dog","a":118,"b":134},{"x":186,"y":6,"t":"fly","a":186,"b":186},{"x":287,"y":12,"t":"huepfer","a":283,"b":290},{"x":341,"y":4,"t":"fly","a":341,"b":341},{"x":379,"y":11,"t":"dog","a":374,"b":382},{"x":409,"y":9,"t":"igel","a":407,"b":411},{"x":433,"y":12,"t":"huepfer","a":428,"b":441}],
+  hazards:[[44,11,2],[98,12,2],[130,10,2],[158,12,2],[190,9,2],[225,11,2],[282,12,2],[310,10,2],[344,7,2],[430,12,2],[468,9,2]],
+  movers:[],
+  yarn:[[62,5],[244,5],[460,5]],
+  checkpoints:[[84,12],[205,11],[330,7],[420,12]],
+  broesel:[[212,11,6],[366,11,6],[494,11,6]],
+  federn:[[167,12],[317,10],[442,12]],
+  milch:[[147,12],[360,11]],
+  gold:[332,2],
+  schlecki:[272,10],
+  mech:{"rush":[[5,12,12,1],[82,14,12,1],[205,12,11,1],[265,12,12,1],[357,10,11,1],[483,12,11,1]],"tramp":[[55,15,9],[237,15,9],[391,15,9]],"wind":{"stark":30},"gravMul":0.93,"par":135},
+  goal:[516,11]
 }
 ];
-/* ---------------- Story pro Level (20 Level, 3 Bosse) ---------------- */
+/* ---------------- Story pro Level (22 Level, 3 Bosse) ---------------- */
 const STORY = [
  'Zuhause riecht noch bis zur zweiten Fußmatte. Danach beginnt der Rest der Welt.',
  'Wo das Essen fliegt und niemand fragt, warum eine Gurke eine Krone trägt.',
@@ -1008,17 +1050,20 @@ const STORY = [
  'Die ganze Reise hängt am Himmel. Fehlt nur noch der letzte Schritt.',
  'Es endet, wie es anfing: mit einer Gurke. Nur größer. DEUTLICH größer. Spring König Gurke 5× auf die Krone!',
  'MEISTERPFAD I: Glas, Seife, Fontänen und Gegenlauf-Bänder. Kein Sicherheitsnetz – nur Timing.',
- 'MEISTERPFAD II: Ein klassischer Lauf über feste Monddächer. Folge den Fischspuren, lande sauber – keine versteckten Schalter.'
+ 'MEISTERPFAD II: Ein klassischer Lauf über feste Monddächer. Folge den Fischspuren, lande sauber – keine versteckten Schalter.',
+ 'LATERNEN-AUFTRAG I: Das rote Band trägt den Morgenfunken. Lauf in seinen Pfotenabdrücken – der Rausch gehört dir, das Timing bleibt deins.',
+ 'LATERNEN-AUFTRAG II: Der Sturm hat den letzten Lichtknoten erwischt. Folge dem roten Faden bis zu dem kleinen Miau am anderen Ende.'
 ];
 
 /* Welche Zwischenszene läuft vor welchem Level? */
 const STORY_VOR = {0:'intro', 1:'hunger', 2:'spielplatz', 3:'stern', 4:'pfuetze', 5:'flusen',
                    6:'mensch', 7:'balkon', 8:'ubahn', 9:'salsa', 10:'salsastory', 11:'dachregeln',
-                   12:'gurr', 13:'kiste', 14:'zweifel', 15:'garagen', 16:'heim'};
+                   12:'gurr', 13:'kiste', 14:'zweifel', 15:'garagen', 16:'heim', 20:'rushruf'};
 const SALSA_AB = 9, SALSA_BIS = 11; /* Salsa führt durch Level 10-12 (Index 9-11) */
 const BONUS_NACH = [1];             /* EIN Bonus-Spaziergang, nach Level 2 – mehr nervt */
 const RENN_LEVEL = 13;              /* vor diesem Level: kurzer Kartonfund → Rennen → kurze Club-Aufnahme */
 const CAMPAIGN_FINALE = 17;          /* danach folgt der optionale, extra schwere Meisterpfad */
+const LATERNE_AB = 20;               /* zwei lange, optionale Flow-Aufträge nach den Meisterpfaden */
 const BOSS_LEVELS = [5, 12, 17];
 const GOLD_STUFEN = [
   {n:3,  name:'Goldspur'},
@@ -1118,6 +1163,13 @@ const CUTSCENES = {
  ],
  funkklar: [
   {bg:'nacht', text:'Am fernsten Fenster antwortete eine kleine Pfote. Das rote Band glomm von Knoten zu Knoten. „Angekommen“, flüsterte Minou. „Die rote Spur hat sie gefunden.“'}
+ ],
+ rushruf: [
+  {bg:'warm', text:'In der nächsten Nacht blinkte das rote Band am Gartentor dreimal. Minou stand außer Atem davor: „Eine kleine Pfote ist im Morgenwind vom Weg abgekommen. Der letzte Lichtknoten liegt hinter den Dächern.“'},
+  {bg:'nachtS', text:'Nina band Chester und Chase je ein Ende des roten Bandes ums Halstuch. „Zusammen hin, zusammen heim.“ Chase grinste. Chester nahm Proviant. „Pfote drauf.“'}
+ ],
+ rushklar: [
+  {bg:'warm', text:'Beim ersten Sonnenstrahl saß die verirrte kleine Pfote sicher neben Minou am Gartentor. Gemeinsam knoteten sie den letzten Lichtknoten fest: Das rote Band führte jetzt auch zurück zu denen, die noch suchten.'}
  ],
  ende: [
   {bg:'warm', text:'Endlich standen sie vor ihrer Haustür. „MAMA!“ Nina schloss beide fest in die Arme. „Da seid ihr ja endlich!“ Aus dem Garten roch es nach Zuhause.'},
@@ -1483,6 +1535,11 @@ const Audio_ = {
     this.tone(f,.055,'triangle',.085,80);
     if(c===5||c===10) this.tone(f*1.5,.13,'sine',.08,120,.045);
   },
+  sRush(kette=1){
+    const f=360+Math.min(5,Math.max(1,kette))*45;
+    this.tone(f,.08,'triangle',.12,190);
+    this.tone(f*1.5,.13,'sine',.085,120,.055);
+  },
   sMiss(){
     this.tone(240,.085,'sine',.055,-80);
   },
@@ -1535,6 +1592,11 @@ const Audio_ = {
       funk:{
         mel:[392,523,587,659, 523,698,659,587, 440,587,659,784, 698,587,523,440],
         bass:[65,78,73,55], dur:0.205, typ:'triangle', glitzer:0.045, laut:0.25
+      },
+      rush:{
+        /* Schnelle, federnde Staffelmusik für die zwei langen Rotband-Läufe. */
+        mel:[523,659,784,880, 659,784,988,1047, 587,698,880,988, 784,659,587,698],
+        bass:[131,165,147,196], dur:0.16, typ:'triangle', glitzer:0.06, laut:0.29
       }
     };
     const tick = () => {
@@ -1550,8 +1612,11 @@ const Audio_ = {
         const spazier = typeof Game !== 'undefined' && ['walk','walkend'].includes(Game.state);
         const bude = typeof Game !== 'undefined' && ['buden','budenEnd'].includes(Game.state);
         const funk = typeof Game !== 'undefined' && ['funk','funkEnd'].includes(Game.state);
+        const rush = typeof Game !== 'undefined' && Game.world && Game.levelIdx>=LATERNE_AB
+          && ['intro','play','dead','levelend'].includes(Game.state);
         const m = weglicht ? MUSIK.weglicht : jagd ? MUSIK.jagd : spazier ? MUSIK.spazier
-          : bude ? MUSIK.bude : funk ? MUSIK.funk : (nachts ? MUSIK.park : MUSIK.kuschelig);
+          : bude ? MUSIK.bude : funk ? MUSIK.funk : rush ? MUSIK.rush
+            : (nachts ? MUSIK.park : MUSIK.kuschelig);
         const t = this.nextTime, s = this.step, stepDur = m.dur;
         const o = this.ctx.createOscillator(), g = this.ctx.createGain();
         o.type = m.typ; o.frequency.value = m.mel[s % m.mel.length] * (s % 32 >= 16 ? 0.75 : 1);
@@ -1631,6 +1696,16 @@ function normalisiereSpielstand(wert){
       if(Object.keys(eintrag).length) best[k] = eintrag;
     }
   }
+  /* Angehängte Nachspiel-Level bleiben für alte Spielstände erreichbar:
+     Ein gespeicherter Level-Bestwert beweist den Abschluss verlässlicher als
+     die damalige, auf die alte Levelzahl begrenzte unlocked-Zahl. */
+  let ausAbschluessenFrei = 1;
+  for(const [k, v] of Object.entries(best)){
+    const m = /^(chester|chase):(\d+)$/.exec(k);
+    if(!m || (!Number.isFinite(v.time) && !Number.isFinite(v.paws))) continue;
+    ausAbschluessenFrei = Math.max(ausAbschluessenFrei,
+      Math.min(LEVELS.length, Number(m[2]) + 2));
+  }
   const huete = istObjekt(quelle.hat) ? quelle.hat : {};
   const br = istObjekt(quelle.bossRush) ? quelle.bossRush : {};
   const brBest = istObjekt(br.best) ? br.best : {};
@@ -1639,7 +1714,8 @@ function normalisiereSpielstand(wert){
   return {
     cat: quelle.cat === 'chase' ? 'chase' : 'chester',
     unlocked: Math.max(zahl(quelle.unlocked, 1, LEVELS.length, 1),
-      kampagneFertig ? Math.min(LEVELS.length,CAMPAIGN_FINALE+2) : 1),
+      kampagneFertig ? Math.min(LEVELS.length,CAMPAIGN_FINALE+2) : 1,
+      ausAbschluessenFrei),
     campaignComplete:kampagneFertig,
     best,
     hat:{
@@ -2526,7 +2602,8 @@ function makePlayer(world){
     shield:false, turbo:0, superT:0, scared:false, idleT:0, katapult:0,
     lichtT:0, lichtWarn:false,
     jetId:-1, jetCharge:0, jetExitT:0, jetPulseCd:0, jetPulseT:0,
-    airT:0, flow:0, flowT:0 };
+    airT:0, flow:0, flowT:0,
+    rushT:0, rushPad:null, rushPadCd:0, rushChain:0, rushChainT:0, rushPulse:0 };
 }
 function moveAxis(p, world, dx, dy){
   if(dx){
@@ -3336,6 +3413,8 @@ const Game = {
     if(p.turbo > 0 && reason !== 'fall') return;
     this.combo = 0; this.comboT = 0;
     p.flow = 0; p.flowT = 0;
+    p.rushT = 0; p.rushPad = null; p.rushPadCd = 0;
+    p.rushChain = 0; p.rushChainT = 0; p.rushPulse = 0;
     this.levelDamage++;
     if(reason === 'fall') this.levelFalls++;
     if(p.shield && (reason === 'enemy' || reason === 'hazard')){
@@ -3368,6 +3447,8 @@ const Game = {
       this.world.gold.y=this.world.gold.homeY;
     }
     p.flow = 0; p.flowT = 0;
+    p.rushT = 0; p.rushPad = null; p.rushPadCd = 0;
+    p.rushChain = 0; p.rushChainT = 0; p.rushPulse = 0;
     p.squash = 1; p.stretch = 1; p.scared = false; p.idleT = 0;
     Input.left = Input.right = Input.jump = Input.jumpPressed = false;
     if(this.salsa){ this.salsa.x = p.x - 44; this.salsa.y = p.y + PH - this.salsa.h; this.salsaPfad = []; }
@@ -3506,6 +3587,11 @@ const Game = {
         this.bonusNext = this.levelIdx + 1;
         this.startWalk(true);
       } else this.loadLevel(this.levelIdx + 1);
+    }
+    else if(this.levelIdx >= LATERNE_AB && !(Save.data.szenen&&Save.data.szenen.rushklar)){
+      Save.data.szenen=Save.data.szenen||{};
+      Save.data.szenen.rushklar=true; Save.store();
+      this.startStory('rushklar',()=>{ this.state='meister'; this.stateT=0; });
     }
     else {
       this.state='meister'; this.stateT=0;
@@ -4624,6 +4710,7 @@ function collectCoin(c){
   const p = Game.player, cat = Game.cat;
   c.got = true; Game.coins++;
   if(p.turbo > 0) p.turbo = Math.min(8, p.turbo + 0.2);   /* Leckerlis füttern den Turbo */
+  if(p.rushT > 0) p.rushT = Math.min(4.5, p.rushT + 0.055); /* Fischspur hält den Rotband-Fluss */
   Game.combo++; Game.comboT = 4; Game.maxCombo = Math.max(Game.maxCombo, Game.combo);
   Game.comboPulse = 1;
   const mult = Game.combo >= 15 ? 4 : Game.combo >= 10 ? 3 : Game.combo >= 5 ? 2 : 1;
@@ -4699,6 +4786,8 @@ function belohneFlowLandung(p, runTempo, impact){
   if(p.airT < 0.26 || Math.abs(p.vx) < runTempo*0.68) return;
   p.flow = Math.min(5, (p.flow || 0) + 1);
   p.flowT = 3.4;
+  if(p.rushT > 0 && Game.world && (Game.world.def.mech||{}).rush)
+    p.rushT = Math.min(4.5, p.rushT + (p.flow >= 3 ? 0.24 : 0.16));
   const bonus = 4 + p.flow*3, alt = floaters.length;
   addScore(bonus, p.x+PW/2, p.y-12);
   if(floaters[alt]) floaters[alt].txt = p.flow > 1
@@ -4725,6 +4814,13 @@ function updatePlayer(dt){
 
   /* Turbo & Angst-Boost */
   if(p.turbo > 0) p.turbo -= dt;
+  if(p.rushT > 0) p.rushT = Math.max(0, p.rushT-dt);
+  if(p.rushChainT > 0){
+    p.rushChainT = Math.max(0, p.rushChainT-dt);
+    if(p.rushChainT === 0) p.rushChain = 0;
+  }
+  p.rushPadCd = Math.max(0, (p.rushPadCd||0)-dt);
+  p.rushPulse = Math.max(0, (p.rushPulse||0)-dt*3.4);
   p.scared = false;
   let speedMul = 1;
   if(p.turbo > 0) speedMul *= 1.28;
@@ -4736,6 +4832,8 @@ function updatePlayer(dt){
       if(dx*dx + dy*dy < 150*150){ p.scared = true; speedMul *= 1.15; break; }
     }
   }
+  /* Rotband-Schub stapelt nicht mit Turbo/Schlecki ins Unkontrollierbare. */
+  if(p.rushT > 0) speedMul = Math.max(speedMul, 1.24);
   const RUN = cat.run * speedMul;
 
   const dir = (Input.right?1:0) - (Input.left?1:0);
@@ -4776,6 +4874,29 @@ function updatePlayer(dt){
     if(p.jetExitT === 0){ p.jetCharge = 0; p.jetId = -1; }
   }
   const glatt = (p.onGround || (p.vy >= 0 && p.vy < 90)) && !!inZone(mech.rutsch);
+  const bodennah = p.onGround || (p.vy >= 0 && p.vy < 90);
+  const rushZone = bodennah ? inZone(mech.rush) : null;
+  if(rushZone){
+    const rushKey = rushZone[0] + ':' + rushZone[2];
+    if(p.rushPad !== rushKey && p.rushPadCd <= 0){
+      const richtung = rushZone[3] < 0 ? -1 : 1;
+      p.rushChain = p.rushChainT > 0 ? Math.min(9,(p.rushChain||0)+1) : 1;
+      /* Die Schubfelder liegen als einzelne Tempowellen weit auseinander.
+         18 s halten die Staffel nur bei zügigem Weiterspielen zusammen;
+         Trödeln oder ein Sturz bricht die Kette weiterhin zuverlässig. */
+      p.rushChainT = 18;
+      p.rushT = Math.max(p.rushT, 3.6);
+      p.rushPulse = 1; p.rushPadCd = 1.15;
+      p.vx = richtung * Math.max(Math.abs(p.vx), cat.run*1.16);
+      p.face = richtung;
+      Audio_.sRush(p.rushChain);
+      haptik(p.rushChain >= 3 ? [7,16,7] : 8);
+      spawnParts(p.x+PW/2,p.y+PH,10,'#ff5c72',
+        {speed:150,life:.48,grav:80,form:'stern',size:5});
+      Game.toast(p.rushChain>1 ? `ROTBAND-KETTE ×${p.rushChain}` : 'ROTBAND-SCHUB · halten & springen!');
+    }
+    p.rushPad = rushKey;
+  }
   if(glatt && Math.abs(p.vx) > 60 && Math.random() < dt*18)
     spawnParts(p.x + PW/2 - p.face*12, p.y + PH - 4, 1, 'rgba(255,255,255,0.9)', {speed:40, life:0.5, grav:-60});
   const acc = p.onGround ? (glatt ? ACC_GND*0.42 : ACC_GND) : ACC_AIR;
@@ -5086,6 +5207,9 @@ function updatePlayer(dt){
       {speed:70, life:0.5, grav:-40, form:'stern', size:6});
   if(p.turbo > 0 && Math.random() < dt*30)
     spawnParts(p.x+PW/2 - p.face*14, p.y+rnd(6,PH-6), 1, ['#8fd0ff','#ffd166','#ff9ec6'][Math.floor(rnd(0,3))], {speed:60, life:0.5, grav:0, form:'stern', size:6});
+  if(p.rushT > 0 && Math.random() < dt*(REDUCED_MOTION?3:22))
+    spawnParts(p.x+PW/2-p.face*18,p.y+rnd(10,PH-4),1,
+      Math.random()<.5?'#ff5c72':'#ffd166',{speed:48,life:.34,grav:20,form:'dot',size:4});
   if(goldStufe() >= 3 && Math.abs(p.vx) > 80 && Math.random() < dt*(REDUCED_MOTION?4:12))
     spawnParts(p.x+PW/2-p.face*12, p.y+PH-4, 1, '#ffd166',
       {speed:45, life:0.45, grav:30, form:'stern', size:4});
@@ -5935,7 +6059,10 @@ function updateWorld(dt, active){
     if(B.deadT > 2.4 && Game.state === 'play') Game.finishLevel();
   }
 
-  const tgtX = clamp(p.x + p.w/2 - VW/2 + p.vx*0.2, 0, Math.max(0, w.pxW - VW));
+  /* Im Rotband-Schub schaut die Kamera weiter voraus, ohne zu zoomen oder
+     den Spieler selbst zu schieben. Das hält schnelle Landungen lesbar. */
+  const vorlauf = p.rushT > 0 ? clamp(p.vx*0.36,-145,145) : p.vx*0.2;
+  const tgtX = clamp(p.x + p.w/2 - VW/2 + vorlauf, 0, Math.max(0, w.pxW - VW));
   /* Vertikale Dead-Zone: kleine Hüpfer bewegen die Welt nicht permanent.
      Erst hohe Sprünge/Fälle ziehen die Kamera weich nach. */
   const mitteY = p.y + p.h/2;
@@ -6672,6 +6799,29 @@ function drawWorld(){
       ctx.beginPath();
       ctx.moveTo(ax, py0 - 1.5); ctx.lineTo(ax + dirB*7, py0 + 1.5); ctx.lineTo(ax, py0 + 4.5);
       ctx.closePath(); ctx.fill();
+    }
+    ctx.restore();
+  }
+  if(mech.rush) for(const [zx, zw, zy, dirRoh] of mech.rush){
+    const dirR = dirRoh < 0 ? -1 : 1;
+    const px0 = zx*TS-cx, py0 = zy*TS-cy, rw = zw*TS;
+    if(px0+rw < -40 || px0 > VW+40) continue;
+    ctx.save();
+    /* Das rote Wegband ist eine Auflage auf echtem Boden – optisch klar
+       anders als eine Plattform oder die frühere nicht kollidierende Linie. */
+    ctx.fillStyle='rgba(255,92,114,.22)'; rr(px0,py0-10,rw,12,6); ctx.fill();
+    ctx.strokeStyle='#ff5c72'; ctx.lineWidth=4; ctx.lineCap='round';
+    ctx.setLineDash([18,10]);
+    ctx.lineDashOffset=REDUCED_MOTION?0:-Game.scroll*70*dirR;
+    ctx.beginPath();ctx.moveTo(px0+5,py0-5);ctx.lineTo(px0+rw-5,py0-5);ctx.stroke();
+    ctx.setLineDash([]);
+    const off=REDUCED_MOTION?8:(((Game.scroll*54)%44)+8);
+    ctx.fillStyle='#ffd166';
+    for(let q=off;q<rw-10;q+=44){
+      const ax=px0+(dirR>0?q:rw-q);
+      ctx.beginPath();
+      ctx.moveTo(ax+dirR*8,py0-5);ctx.lineTo(ax-dirR*3,py0-11);ctx.lineTo(ax-dirR*3,py0+1);
+      ctx.closePath();ctx.fill();
     }
     ctx.restore();
   }
@@ -8192,6 +8342,21 @@ function drawCat(){
     }
     ctx.restore();
   }
+  if(!p.dead && p.rushT>0){
+    ctx.save();
+    const puls=clamp(p.rushPulse||0,0,1);
+    ctx.globalAlpha=.52+puls*.28;
+    ctx.strokeStyle='#ff5c72';ctx.lineWidth=3;ctx.lineCap='round';
+    if(!REDUCED_MOTION){
+      for(let i=0;i<3;i++){
+        const lang=24+i*13+puls*16, yy=by-18-i*13;
+        ctx.beginPath();ctx.moveTo(bx-p.face*28,yy);ctx.lineTo(bx-p.face*(28+lang),yy+p.face*(i-1)*2);ctx.stroke();
+      }
+    }
+    ctx.strokeStyle='rgba(255,209,102,.9)';ctx.lineWidth=2.5;
+    ctx.beginPath();ctx.arc(bx,by-38,44+puls*7,0,6.2832);ctx.stroke();
+    ctx.restore();
+  }
   /* Fortgeschrittenen-Flow bleibt rein kosmetisch/scorebasiert. */
   if(!p.dead && p.flow>=2 && p.flowT>0 && !REDUCED_MOTION){
     ctx.save();ctx.globalAlpha=.32+.11*p.flow;
@@ -8395,6 +8560,16 @@ function drawHUD(){
     rr(VW/2-86, 69, 172 * clamp(Game.player.turbo / 8, 0, 1), 12, 6); ctx.fill();
     ctx.restore();
     textC('TURBO – unaufhaltsam! ' + Math.ceil(Game.player.turbo) + ' s', VW/2, 96, 12, '#3c78c9', 'center', '700');
+  } else if(Game.player && Game.player.rushT > 0){
+    ctx.save();
+    ctx.fillStyle=u.panel;rr(VW/2-90,66,180,18,9);ctx.fill();
+    const rg=ctx.createLinearGradient(VW/2-86,0,VW/2+86,0);
+    rg.addColorStop(0,'#ff5c72');rg.addColorStop(1,'#ffd166');
+    ctx.fillStyle=rg;
+    rr(VW/2-86,69,172*clamp(Game.player.rushT/4.5,0,1),12,6);ctx.fill();
+    ctx.restore();
+    textC(`ROTBAND-SCHUB${Game.player.rushChain>1?' ×'+Game.player.rushChain:''}`,
+      VW/2,96,12,'#d43d5c','center','800');
   }
 
   textC(`LEVEL ${Game.levelIdx+1} · ${w.def.name}`, VW/2, 25, TOUCH_DEVICE?18:15, u.tx,
@@ -8806,7 +8981,7 @@ function drawLevelsMobile(){
   uiButton(906, 8, 52, 48, '★', () => { Game.state='album'; Game.stateT=0; },
     {size:19, r:22, fill:'rgba(255,250,225,.94)', edge:'rgba(255,179,86,.8)', col:'#d9902e'});
 
-  const tabs = ['1–6 · START','7–12 · STADT','13–18 · HEIMWEG','19–20 · MEISTER'];
+  const tabs = ['1–6 · START','7–12 · STADT','13–18 · HEIMWEG',`19–${LEVELS.length} · EXTRA`];
   for(let i=0;i<seiten;i++){
     uiButton(38+i*226, 68, 214, 50, tabs[i]||`${i*6+1}–${Math.min(LEVELS.length,i*6+6)}`, () => {
       Game.mobileMapPage = i;
@@ -8857,14 +9032,15 @@ function drawLevelsMobile(){
     ctx.restore();
   }
 
-  if(page === seiten-1 && LEVELS.length%6){
+  const restLetzteSeite=LEVELS.length%6;
+  if(page === seiten-1 && restLetzteSeite>0 && restLetzteSeite<=3){
     uiButton(330,300,600,112,'♛  MEISTEREI · BOSS-RUSH · BELOHNUNGEN',()=>{
       Game.state='meister'; Game.stateT=0;
     },{size:18.5,r:24,fill:'rgba(30,28,53,.94)',edge:'#c9a4ff',col:'#ffd166'});
   }
 
   uiButton(12,464,52,64,'⟵',() => { Game.state='select'; Game.stateT=0; },{size:20,r:20});
-  uiButton(76,464,872,64,'🐾  NEBENPFADE · 5 GROSSE SIDEQUESTS  →',()=>{
+  uiButton(76,464,872,64,'🐾  NEBENPFADE · 6 GROSSE SIDEQUESTS  →',()=>{
     Game.state='extras'; Game.stateT=0;
   },{size:19,r:20,fill:'rgba(255,248,252,.97)',edge:'#ff8fb3',col:'#a05c78'});
 }
@@ -8888,12 +9064,13 @@ function drawLevels(){
   const unlocked = Math.min(Save.data.unlocked, LEVELS.length);
   drawHeimweg(240, 66, 500, clamp((unlocked-1)/CAMPAIGN_FINALE,0,1), true);
 
-  const pos = [];
-  for(let r=0;r<4;r++) for(let i=0;i<5;i++) pos.push([8 + i*190, 76 + r*96]);
+  const pos = [], kartenZeilen=Math.ceil(LEVELS.length/5), kompakt=kartenZeilen>4;
+  for(let r=0;r<kartenZeilen;r++) for(let i=0;i<5;i++)
+    pos.push([8+i*190,76+r*(kompakt?76:96)]);
 
   LEVELS.forEach((lv, i) => {
     if(!pos[i]) return;
-    const [x, y] = pos[i], w2 = 180, h2 = 88;
+    const [x, y] = pos[i], w2 = 180, h2 = kompakt?68:88;
     const frei = i < unlocked;
     const sel = Game.selLvl === i;
     const boss = !!lv.boss;
@@ -8913,18 +9090,19 @@ function drawLevels(){
     ctx.lineWidth = sel ? 3.5 : 2;
     rr(x, y, w2, h2, 14); ctx.stroke();
 
-    textC(boss ? '👑' : String(i+1), x+19, y+18, boss ? 15 : 18, frei ? (boss ? '#e0433f' : '#a05c78') : 'rgba(120,95,110,0.5)');
+    const kopfY=y+(kompakt?15:18), pfotenY=y+(kompakt?39:51), infoY=y+(kompakt?58:73);
+    textC(boss ? '👑' : String(i+1), x+19, kopfY, boss ? 15 : 18, frei ? (boss ? '#e0433f' : '#a05c78') : 'rgba(120,95,110,0.5)');
     if(frei){
-      textC(lv.name,x+w2/2+9,y+17,12,boss?'#c73e3f':(t.dark?'#fff2f8':'#7a4a5c'),
+      textC(lv.name,x+w2/2+9,kopfY,kompakt?11.2:12,boss?'#c73e3f':(t.dark?'#fff2f8':'#7a4a5c'),
         'center','bold',w2-58);
       const key = Game.catKey + ':' + i;
       const best = Save.data.best[key];
-      for(let k=0;k<3;k++) pfote(x+w2/2-26+k*26, y+51, 1.18, best && best.paws > k);
-      if(best) textC(`Best ${Math.floor(best.time/60)}:${String(best.time%60).padStart(2,'0')}`, x+w2/2, y+73, 10.5, '#c98da6', 'center', '600');
-      else textC(i>CAMPAIGN_FINALE?'Meisterprüfung':'noch offen', x+w2/2, y+73, 10.5, 'rgba(160,110,130,0.7)', 'center', '600');
+      for(let k=0;k<3;k++) pfote(x+w2/2-26+k*26,pfotenY,kompakt?1.02:1.18,best&&best.paws>k);
+      if(best) textC(`Best ${Math.floor(best.time/60)}:${String(best.time%60).padStart(2,'0')}`,x+w2/2,infoY,kompakt?9.5:10.5,'#c98da6','center','600');
+      else textC(i>=LATERNE_AB?'Laternen-Auftrag':(i>CAMPAIGN_FINALE?'Meisterprüfung':'noch offen'),x+w2/2,infoY,kompakt?9.5:10.5,'rgba(160,110,130,0.7)','center','600');
       if(Save.data.gold['l'+i]){
         ctx.save();
-        ctx.translate(x+w2-18, y+51);
+        ctx.translate(x+w2-18,pfotenY);
         ctx.fillStyle = '#ffc94d';
         ctx.beginPath(); ctx.ellipse(-2, 0, 7, 4.8, 0, 0, 6.2832); ctx.fill();
         ctx.beginPath(); ctx.moveTo(4, 0); ctx.lineTo(9.5, -4); ctx.lineTo(9.5, 4); ctx.closePath(); ctx.fill();
@@ -8933,10 +9111,10 @@ function drawLevels(){
       Game.uiRects.push({x, y, w: w2, h: h2, fn: () => { Game.selLvl = i; Game.startLevel(i); }});
     } else {
       ctx.fillStyle = 'rgba(120,95,110,0.45)';
-      rr(x+w2/2-11, y+47, 22, 17, 4); ctx.fill();
+      rr(x+w2/2-11,pfotenY-4,22,17,4); ctx.fill();
       ctx.strokeStyle = 'rgba(120,95,110,0.45)'; ctx.lineWidth = 4;
-      ctx.beginPath(); ctx.arc(x+w2/2, y+47, 8, Math.PI, 0); ctx.stroke();
-      textC('Schaff Level ' + i, x+w2/2, y+74, 10.5, 'rgba(120,95,110,0.6)', 'center', '600');
+      ctx.beginPath(); ctx.arc(x+w2/2,pfotenY-4,8,Math.PI,0); ctx.stroke();
+      textC('Schaff Level '+i,x+w2/2,infoY,kompakt?9.5:10.5,'rgba(120,95,110,0.6)','center','600');
     }
     ctx.restore();
   });
@@ -8944,7 +9122,7 @@ function drawLevels(){
   /* Fußleiste: zurück + eigener Hub für große, lesbare Sidequest-Karten */
   uiButton(12, VH-56, 44, 40, '⟵', () => { Game.state='select'; Game.stateT=0; },
     {size:15, sel: Game.selLvl === LEVELS.length});
-  uiButton(64,VH-56,884,40,'🐾  NEBENPFADE · SPAZIERGANG, JAGD, BUDE, RENNEN & ROTES WEGLICHT  →',
+  uiButton(64,VH-56,884,40,'🐾  NEBENPFADE · 6 EIGENE SIDEQUESTS  →',
     ()=>{Game.state='extras';Game.stateT=0;},
     {size:13.5,sel:Game.selLvl===LEVELS.length+1,fill:'rgba(255,248,252,.95)',edge:'#ff8fb3',col:'#a05c78'});
   /* Sticker-Album (kleiner Stern oben rechts) */
@@ -9472,8 +9650,9 @@ function drawIntro(){
   const u = w.theme.dark ? '#fff2f8' : '#a05c78';
   const kapitel = Game.bossRushActive ? `BOSS-RUSH ${Game.bossRushPos+1} / ${BOSS_LEVELS.length}`
     : (Game.levelIdx===CAMPAIGN_FINALE ? 'FINALE'
-      : (Game.levelIdx>CAMPAIGN_FINALE ? `MEISTERPFAD ${Game.levelIdx-CAMPAIGN_FINALE} / ${LEVELS.length-CAMPAIGN_FINALE-1}`
-        : `LEVEL ${Game.levelIdx+1} von ${CAMPAIGN_FINALE+1}`));
+      : (Game.levelIdx>=LATERNE_AB ? `LATERNEN-AUFTRAG ${Game.levelIdx-LATERNE_AB+1} / ${LEVELS.length-LATERNE_AB}`
+        : (Game.levelIdx>CAMPAIGN_FINALE ? `MEISTERPFAD ${Game.levelIdx-CAMPAIGN_FINALE} / ${LATERNE_AB-CAMPAIGN_FINALE-1}`
+        : `LEVEL ${Game.levelIdx+1} von ${CAMPAIGN_FINALE+1}`)));
   textC(kapitel, VW/2, VH/2-86, 17, w.theme.dark?'rgba(255,242,248,0.7)':'#c98da6');
   textC(w.def.name, VW/2, VH/2-52, boss ? 32 : 36, boss ? '#ff5c5c' : u);
   textUmbruch(STORY[Game.levelIdx] || w.theme.sub, VW/2, VH/2-4, TOUCH_DEVICE ? 18 : 15.5,
@@ -9537,11 +9716,15 @@ function drawMeister(){
     ()=>{if(frei) Game.startBossRush();},{size:TOUCH_DEVICE?19:17,r:22,fill:frei?'rgba(124,58,237,.92)':'rgba(60,58,78,.9)',
       edge:frei?'#f43f5e':'rgba(226,232,240,.25)',col:'#fff'});
   const untenY=TOUCH_DEVICE?462:474, untenH=TOUCH_DEVICE?66:52;
-  uiButton(22,untenY,160,untenH,'⟵ Level-Karte',()=>{Game.state='levels';Game.stateT=0;},{size:TOUCH_DEVICE?15.5:14,r:20});
-  if(Save.data.unlocked>CAMPAIGN_FINALE+1)
-    uiButton(194,untenY,270,untenH,'◆ Meisterpfad I',()=>Game.startLevel(CAMPAIGN_FINALE+1),{size:TOUCH_DEVICE?16:14,r:20,fill:'rgba(124,58,237,.86)',col:'#fff'});
-  if(Save.data.unlocked>CAMPAIGN_FINALE+2)
-    uiButton(476,untenY,270,untenH,'◆ Meisterpfad II',()=>Game.startLevel(CAMPAIGN_FINALE+2),{size:TOUCH_DEVICE?16:14,r:20,fill:'rgba(124,58,237,.86)',col:'#fff'});
+  uiButton(20,untenY,158,untenH,'⟵ Karte',()=>{Game.state='levels';Game.stateT=0;},{size:TOUCH_DEVICE?15.5:14,r:20});
+  const pfadKurz=['◆ GLASDACH','◆ MONDDÄCHER','⚡ ROTBAND','⚡ WINDPFOTEN'];
+  LEVELS.slice(CAMPAIGN_FINALE+1).forEach((lv,j)=>{
+    const idx=CAMPAIGN_FINALE+1+j;
+    if(Save.data.unlocked<=idx)return;
+    uiButton(190+j*188,untenY,180,untenH,pfadKurz[j]||lv.name,()=>Game.startLevel(idx),
+      {size:TOUCH_DEVICE?14.5:12.5,r:18,
+       fill:idx>=LATERNE_AB?'rgba(212,61,92,.9)':'rgba(124,58,237,.86)',col:'#fff'});
+  });
 }
 
 function drawBossRushEnd(){
@@ -9626,8 +9809,12 @@ function drawLevelEnd(){
       :(rest===1?'Nur noch das FINALE bis zu Mama Nina!':`Noch ${rest} Stationen bis zu Mama Nina`),
       VW/2,485,TOUCH_DEVICE?15.5:13,'#ffd9e8','center','700');
     drawHeimweg(VW/2-250,513,500,(Game.levelIdx+1)/(CAMPAIGN_FINALE+1),false);
+  } else if(Game.levelIdx>=LATERNE_AB){
+    const pos=Game.levelIdx-LATERNE_AB+1,gesamt=LEVELS.length-LATERNE_AB;
+    textC(`LATERNEN-AUFTRAG ${pos} / ${gesamt} · ROTES BAND`,VW/2,485,TOUCH_DEVICE?15.5:13,'#ff8fb3','center','800');
+    drawHeimweg(VW/2-250,513,500,pos/gesamt,false,gesamt);
   } else {
-    const meisterPos=Game.levelIdx-CAMPAIGN_FINALE, meisterGesamt=LEVELS.length-CAMPAIGN_FINALE-1;
+    const meisterPos=Game.levelIdx-CAMPAIGN_FINALE,meisterGesamt=LATERNE_AB-CAMPAIGN_FINALE-1;
     textC(`MEISTERPFAD ${meisterPos} / ${meisterGesamt}`,VW/2,485,TOUCH_DEVICE?15.5:13,'#ffd166','center','800');
     drawHeimweg(VW/2-250,513,500,meisterPos/meisterGesamt,false,meisterGesamt);
   }
@@ -10129,12 +10316,13 @@ const HILFE = [
     {ic:'miau',     tt:'Miau-Blüten',        tx:'Rosa Plattformen sind da, mintfarbene nicht. Ein MIAU tauscht beide – überall im Level gleichzeitig!'},
     {ic:'pausei',   tt:'Taschenlampen',      tx:'Feste Kartons werfen sichtbaren Schatten. Streift dich Helgas Licht, warnt ein !-Ring kurz: sofort in Deckung huschen!'},
     {ic:'tasten',   tt:'Die Miezelinie',     tx:'Du bestimmst jetzt selbst das Tempo. Laufbänder und schnelle Wagenplattformen geben dem Bahnhof seinen Rhythmus.'},
+    {ic:'tasten',   tt:'Rote Pfotenbänder',  tx:'Sie geben kurz Rotband-Schub: Richtung halten, im Rhythmus springen und sauber landen. Fischli verlängern den Schub – unverwundbar wirst du nicht.'},
     {ic:'gurke',    tt:'Zwischenbosse',      tx:'Lord Flusen: 4× bespringen, nie beim Wirbeln. Generalin Gurr: nur, wenn sie feststeckt. Und „!!“ ist IMMER gelogen.'}
   ]},
   {titel:'Gut zu wissen', zeilen:[
     {ic:'pfoetch',  tt:'Pfötchen',          tx:'Bis zu 3 pro Level – die dritte gibt es ab 90 % der Leckerlis.'},
     {ic:'huete',    tt:'Hüte',              tx:'Reine Deko-Belohnung: Gesammelte Pfötchen schalten Hüte frei (ab 6, 14, 22, 30). Wechseln: 🎩-Knopf unter deiner Katze am Startbildschirm.'},
-    {ic:'sticker',  tt:'Sticker-Album',     tx:'16 Sticker für besondere Taten. Der Stern oben rechts auf der Level-Karte öffnet das Album.'},
+    {ic:'sticker',  tt:'Sticker-Album',     tx:'18 Sticker für besondere Taten. Der Stern oben rechts auf der Level-Karte öffnet das Album.'},
     {ic:'mini',     tt:'Minispiele',        tx:'Spaziergang (ab Level 2) · Vogel-Jagd (ab 4) · Schießbude (ab 6) · Kisten-Rennen gegen die Laternen-Liga (nach dem großen Rennen der Story): ← → lenkt, Leertaste hüpft, Fischli geben Schub.'},
     {ic:'speicher', tt:'Speichern',         tx:'Passiert ganz automatisch. Extra sicher: „⇪ Spielstand-Code“ auf dem Startbildschirm – Code kopieren und gut aufheben!'}
   ]}
@@ -12371,6 +12559,44 @@ function drawStory(){
       drawStoryCat('chase', 440, BY, 0.95, 'sit', t, 1);
       if(j >= 1 && Math.random() < 0.1) heart(500 + rnd(-60,120), BY-90, 1);
     }
+  } else if(key === 'rushruf' || key === 'rushklar'){
+    /* Der rote Storyfaden wird hier wörtlich zur Strecke: vom Gartentor
+       über die Dächer bis zum nächsten Lichtknoten. */
+    ctx.fillStyle='rgba(28,22,54,.88)';
+    for(const [rx,rw,rh] of [[0,180,86],[154,210,122],[340,190,72],[506,224,110],[706,254,82]]){
+      ctx.beginPath();ctx.moveTo(rx,BY);ctx.lineTo(rx,BY-rh);
+      ctx.lineTo(rx+rw/2,BY-rh-34);ctx.lineTo(rx+rw,BY-rh);ctx.lineTo(rx+rw,BY);
+      ctx.closePath();ctx.fill();
+    }
+    ctx.save();
+    ctx.strokeStyle='#e64d68';ctx.lineWidth=7;ctx.lineCap='round';
+    ctx.setLineDash([18,12]);ctx.lineDashOffset=REDUCED_MOTION?0:-Game.scroll*34;
+    ctx.beginPath();ctx.moveTo(-20,BY-80);ctx.bezierCurveTo(240,BY-195,520,BY-16,980,BY-174);ctx.stroke();
+    ctx.setLineDash([]);ctx.restore();
+    for(const [lx,ly] of [[166,BY-142],[506,BY-126],[858,BY-208]]){
+      ctx.fillStyle='rgba(255,214,130,.14)';ctx.beginPath();ctx.arc(lx,ly,42,0,6.2832);ctx.fill();
+      ctx.fillStyle='#ffd682';rr(lx-8,ly-11,16,22,4);ctx.fill();
+      ctx.fillStyle='rgba(34,26,58,.95)';ctx.fillRect(lx-3,ly+11,6,BY-ly-11);
+    }
+    if(key === 'rushklar'){
+      drawClubFigur(650,BY,1.0,RENN_KATZEN[3],'paw',t,-1);
+      drawClubFigur(735,BY,.76,
+        {nr:2,fell:'#dbc8a8',bauch:'#f4ead5',dunkel:'#9d8068',nase:'#d99494'},'sit',t,-1);
+      drawStoryCat('chester',410,BY,.96,'paw',t,1);
+      drawStoryCat('chase',505,BY,.96,'paw',t,-1);
+      drawStern(858,BY-208,8,'#fff2b8');
+    } else if(idx === 0){
+      drawClubFigur(620,BY,1.0,RENN_KATZEN[3],'run',t,-1);
+      drawStoryCat('chester',360,BY,.94,'look',t,1);
+      drawStoryCat('chase',460,BY,.94,'look',t,1);
+      textC('3×',620,BY-112-Math.sin(t*4)*3,18,'#ff8fb3');
+    } else {
+      drawNinaFigur(650,BY+18,1.05,'offen',t);
+      drawStoryCat('chester',390,BY,.94,'paw',t,1);
+      drawStoryCat('chase',490,BY,.94,'paw',t,-1);
+      ctx.strokeStyle='#e64d68';ctx.lineWidth=5;ctx.beginPath();
+      ctx.moveTo(405,BY-56);ctx.quadraticCurveTo(440,BY-72,470,BY-52);ctx.stroke();
+    }
   } else if(key === 'heim'){
     /* Dächerkämme */
     ctx.fillStyle = 'rgba(30,22,56,0.9)';
@@ -12985,6 +13211,7 @@ window.__CATS = {
     BUDEN_PHYSIK},
   systems:{BOSS_LEVELS:[...BOSS_LEVELS], GOLD_STUFEN:GOLD_STUFEN.map(s=>({...s})),
     EASTER_EGGS:EASTER_EGGS.map(e=>({...e})), CUTSCENES,
+    HILFE_SEITEN:{desktop:HILFE.length,mobile:HILFE_MOBILE.length},
     MIAU_CONFIG:{RADIUS:MIAU_RADIUS,COOLDOWN:MIAU_COOLDOWN,MAX_ZIELE:MIAU_MAX_ZIELE},
     LICHT_CONFIG:{WARNZEIT:LICHT_WARNZEIT},
     lichtLinieFrei,lichtStrahlLaenge,gurrSicheresZiel,
